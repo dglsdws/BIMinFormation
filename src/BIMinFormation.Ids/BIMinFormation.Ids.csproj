@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>BIMinFormation.Ids</RootNamespace>
+    <Description>Leitura e auditoria de arquivos IDS 1.0 (buildingSMART).</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BIMinFormation.Ids.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- catálogos dos esquemas IFC gerados por tools/oracle/dump_schema.py -->
+    <EmbeddedResource Include="Schema\ifc-*.txt" LogicalName="BIMinFormation.Ids.Schema.%(Filename)%(Extension)" />
+    <!-- traduções da interface para o inglês (M21) -->
+    <EmbeddedResource Include="Text\en.txt" LogicalName="BIMinFormation.Ids.Text.en.txt" />
+  </ItemGroup>
+
+</Project>

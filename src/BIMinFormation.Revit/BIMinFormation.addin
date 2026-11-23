@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>BIMinFormation</Name>
+    <Assembly>BIMinFormation\BIMinFormation.Revit.dll</Assembly>
+    <AddInId>6B0C1F9E-6E2B-4C1E-9C0A-3E6B2D7A9F41</AddInId>
+    <FullClassName>BIMinFormation.Revit.App</FullClassName>
+    <VendorId>BIMINFORMATION</VendorId>
+    <VendorDescription>Douglas W. Santos, https://github.com/dglsdws/BIMinFormation</VendorDescription>
+  </AddIn>
+</RevitAddIns>

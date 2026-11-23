@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>BIMinFormation.Exporter</RootNamespace>
+    <Description>O que o exportador IFC do Revit sabe fazer, por versão: tipos, Psets, versões IFC.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BIMinFormation.Ids\BIMinFormation.Ids.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- gerado por tools/exporter-catalog a partir da instalação do Revit -->
+    <EmbeddedResource Include="Catalog\revit-*.txt" LogicalName="BIMinFormation.Exporter.Catalog.%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BIMinFormation.Exporter.Tests" />
+  </ItemGroup>
+
+</Project>

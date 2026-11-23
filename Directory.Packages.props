@@ -1,0 +1,15 @@
+<Project>
+  <ItemGroup>
+    <!-- API do Revit (somente referência; o Revit fornece as DLLs em tempo de execução) -->
+    <!-- 2023 compila contra a 2023.0.1 (serve ao 2023.0 e ao 2023.1); 2025 e 2026 em .NET 8 (roda também no Revit
+         atualizado para .NET 10); 2027 em .NET 10 -->
+    <PackageVersion Include="Nice3point.Revit.Api.RevitAPI" Version="2023.0.1" Condition="'$(RevitVersion)' == '2023' or '$(RevitVersion)' == ''" />
+    <PackageVersion Include="Nice3point.Revit.Api.RevitAPIUI" Version="2023.0.1" Condition="'$(RevitVersion)' == '2023' or '$(RevitVersion)' == ''" />
+    <PackageVersion Include="Nice3point.Revit.Api.RevitAPI" Version="2025.4.60" Condition="'$(RevitVersion)' == '2025'" />
+    <PackageVersion Include="Nice3point.Revit.Api.RevitAPIUI" Version="2025.4.60" Condition="'$(RevitVersion)' == '2025'" />
+    <PackageVersion Include="Nice3point.Revit.Api.RevitAPI" Version="2026.4.10" Condition="'$(RevitVersion)' == '2026'" />
+    <PackageVersion Include="Nice3point.Revit.Api.RevitAPIUI" Version="2026.4.10" Condition="'$(RevitVersion)' == '2026'" />
+    <PackageVersion Include="Nice3point.Revit.Api.RevitAPI" Version="2027.4.0" Condition="'$(RevitVersion)' == '2027'" />
+    <PackageVersion Include="Nice3point.Revit.Api.RevitAPIUI" Version="2027.4.0" Condition="'$(RevitVersion)' == '2027'" />
+  </ItemGroup>
+</Project>

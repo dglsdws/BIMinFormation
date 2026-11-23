@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>BIMinFormation.Core</RootNamespace>
+    <Description>Casos de uso do plugin sem dependência do Revit: perfil, classificação, preenchimento e mapeamento.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BIMinFormation.Ids\BIMinFormation.Ids.csproj" />
+    <ProjectReference Include="..\BIMinFormation.Rules\BIMinFormation.Rules.csproj" />
+    <ProjectReference Include="..\BIMinFormation.Exporter\BIMinFormation.Exporter.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BIMinFormation.Core.Tests" />
+  </ItemGroup>
+
+</Project>

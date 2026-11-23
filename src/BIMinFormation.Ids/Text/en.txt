@@ -1,0 +1,735 @@
+# Traduções da interface para o inglês (M21): português TAB inglês, uma por linha; \n e \t escritos assim.
+# Gerado por tools/i18n.py (as frases saem do código); preencher só a coluna do inglês.
+
+# src/BIMinFormation.Core/Classification/ClassificationAction.cs
+ exista: preencha no Preencher.	 exists: enter it in Fill In Parameters.
+ no applicability não pode ser gravada pela Classificação.	 in the applicability cannot be written by Classification.
+ por restrição: escolha o valor no Preencher.	 by restriction: choose the value in Fill In Parameters.
+A ficha aceita mais de uma entidade: escolha a entidade à mão.	The specification accepts more than one entity: choose the entity by hand.
+A ficha não tem identidade que a Classificação possa gravar.	The specification has no identity that Classification can write.
+Faceta 	Facet 
+O applicability pede 	The applicability requires 
+O applicability pede que 	The applicability requires that 
+O tipo predefinido da ficha é um padrão aberto: preencha à mão.	The specification's predefined type is an open pattern: fill it in by hand.
+
+# src/BIMinFormation.Core/Fill/FillCell.cs
+ (aceita: 	 (accepts: 
+a ficha proíbe este valor	the specification prohibits this value
+calculado pelo exportador	calculated by the exporter
+conferir na modelagem	check in the model
+não atende à ficha	does not meet the specification
+o exportador não escreve este valor como o IDS pede	the exporter does not write this value as the IDS requires
+o exportador só escreve um destes valores: 	the exporter only writes one of these values: 
+obrigatório	required
+texto	text
+true ou false	true or false
+um número (use ponto decimal)	a number (use a decimal point)
+um número inteiro	an integer
+valor não é 	value is not 
+
+# src/BIMinFormation.Core/Mapping/ExportChecklist.cs
+ grava IFC4X3_ADD2 com quantidades; a Vista de Referência não grava quantidades.	 writes IFC4X3_ADD2 with quantities; the Reference View does not write quantities.
+ não exporta IFC 4.3 (IFC4X3_ADD2). Exporte de uma versão 	 does not export IFC 4.3 (IFC4X3_ADD2). Export from a Revit version 
+ tem só a Vista de Referência IFC4.3, que grava IFC4X3_ADD2 	 only has the IFC4.3 Reference View, which writes IFC4X3_ADD2 
+.ids recebidos antes da entrega.	.ids files received before delivery.
+Confira em "Configurações de classificação" o sistema usado no parâmetro ClassificationCode.	Check the system used in the ClassificationCode parameter in "Classification Settings".
+Exporte os elementos visíveis na vista ou o modelo inteiro conforme o BEP, e valide o IFC com os 	Export the elements visible in the view or the whole model as the BEP requires, and validate the IFC with the 
+IfcDescription, IfcObjectType, IfcTag e IfcLongName quando preenchidos.	IfcDescription, IfcObjectType, IfcTag and IfcLongName parameters when filled in.
+Marque "Exportar conjuntos de propriedades comuns do IFC" (as fichas pedem Psets padrão).	Check "Export IFC common property sets" (the specifications require standard Psets).
+Marque "Exportar conjuntos de propriedades definidos pelo usuário" e escolha o arquivo 	Check "Export user defined property sets" and choose the file 
+Marque "Exportar quantidades base" (as fichas pedem conjuntos Qto_).	Check "Export base quantities" (the specifications require Qto_ sets).
+Os atributos Name, Description, ObjectType, Tag e LongName saem dos parâmetros IfcName, 	The Name, Description, ObjectType, Tag and LongName attributes come from the IfcName, 
+Revit (grupos como "Cotas" e "Fases" não são pedidos pelas fichas).	Revit property sets (groups such as "Dimensions" and "Phasing" are not required by the specifications).
+Revit 2027: deixe ligados os conjuntos de propriedades comuns do IFC e desligados os conjuntos do 	Revit 2027: keep the IFC common property sets on and the 
+Revit 2027: os conjuntos do usuário ficam gravados no projeto. O botão Exportar do plugin grava os 	Revit 2027: the user property sets are stored in the project. The plugin's Export button writes the 
+Versão IFC: IFC 2x3 Coordination View 2.0.	IFC version: IFC 2x3 Coordination View 2.0.
+Versão IFC: IFC 4.3 Vista de Transferência de Projeto. O Revit 	IFC version: IFC 4.3 Design Transfer View. Revit 
+Versão IFC: IFC 4.3. Atenção: o exportador do Revit 2023 grava o cabeçalho IFC4X3 (não IFC4X3_ADD2) 	IFC version: IFC 4.3. Note: the Revit 2023 exporter writes the IFC4X3 header (not IFC4X3_ADD2) 
+Versão IFC: IFC4 Design Transfer View. A Reference View descarta conjuntos fora da lista 	IFC version: IFC4 Design Transfer View. The Reference View drops property sets outside the 
+Versão IFC: o Revit 	IFC version: Revit 
+certificada (ex.: Pset_DoorWindowGlazingType, Pset_CoveringFlooring).	certified list (e.g. Pset_DoorWindowGlazingType, Pset_CoveringFlooring).
+conjuntos e o modelo de parâmetros da configuração; com o arquivo avulso das Configurações, importe-o na aba 	property sets and the parameter template of the setup; with the standalone file from Settings, import it in the 
+de conjuntos de propriedades da exportação e reimporte sempre que gerar o arquivo de novo.	property sets tab of the export and import it again whenever the file is generated again.
+do Revit que tenha essa opção; o arquivo de PropertySets gerado continua válido.	that has this option; the generated PropertySets file is still valid.
+e não exporta quantidades no 4.3 experimental; para entregar, use o Revit 2026 ou mais novo.	and does not export quantities in the experimental 4.3; to deliver, use Revit 2026 or newer.
+gerado pelo plugin	generated by the plugin
+mas não grava quantidades (Qto_); para entregar, exporte do Revit 2026 ou mais novo.	but does not write quantities (Qto_); to deliver, export from Revit 2026 or newer.
+
+# src/BIMinFormation.Core/Mapping/ExportMapping.cs
+ e não vai passar.	 and will not pass.
+ em 	 in 
+ ficha(s)); 	 specification(s)); 
+ não entra no arquivo: 	 is not included in the file: 
+ pede 	 requires 
+: a ficha não define a entidade; o conjunto vai para 	: the specification does not define the entity; the property set goes to 
+: no Revit 2027 o conjunto tem um parâmetro só por 	: in Revit 2027 the property set has a single parameter per 
+: no Revit 2027 o conjunto tem um tipo só por propriedade; fica 	: in Revit 2027 the property set has a single type per property; it stays 
+: o exportador do Revit escreve um tipo só por propriedade e entidade; fica 	: the Revit exporter writes a single type per property and entity; it stays 
+; vale um vínculo geral.	; a general link applies.
+Revit 2023 a 2026 (um grupo por entidade)	Revit 2023 to 2026 (one group per entity)
+Revit 2027 (um grupo por conjunto)	Revit 2027 (one group per property set)
+propriedade, e os vínculos por entidade apontam para 	property, and the links per entity point to 
+
+# src/BIMinFormation.Core/Mapping/ExportSetup.cs
+ Exporte do Revit 2026 ou mais novo.	 Export from Revit 2026 or newer.
+ exporta IFC 4.3 só na Vista 	 exports IFC 4.3 only in the 
+ não entrega: 	 does not deliver: 
+ não tem a opção 	 does not have the option 
+As fichas pedem IFC 4.3 (IFC4X3_ADD2), que o Revit 	The specifications require IFC 4.3 (IFC4X3_ADD2), which Revit 
+As fichas pedem quantidades (Qto_), e o Revit 	The specifications require quantities (Qto_), and Revit 
+O exportador do Revit 	The Revit exporter 
+Transferência de Projeto IFC4x3).	Design Transfer View).
+de Referência, que não grava quantidades. Exporte do Revit 2026 ou mais novo (Vista de 	Reference View, which does not write quantities. Export from Revit 2026 or newer (IFC4x3 
+esta versão não tem IFC 4.3.	this version has no IFC 4.3.
+o 4.3 experimental grava o cabeçalho IFC4X3 e não exporta quantidades.	the experimental 4.3 writes the IFC4X3 header and does not export quantities.
+
+# src/BIMinFormation.Core/Prevalidation/IfcProbe.cs
+no IFC a ficha não alcança o elemento (saiu como 	in the IFC the specification does not reach the element (exported as 
+no IFC: 	in the IFC: 
+não saiu no IFC	not exported to the IFC
+
+# src/BIMinFormation.Core/Prevalidation/PrevalidationReports.cs
+ não escreve como pedido, ou que dependem de um ajuste do Protocolo. Independem do modelo.</p>	 does not write as required, or that depend on an adjustment to the Protocol. They do not depend on the model.</p>
+ não existe em 	 does not exist in 
+ não é o nome de nenhuma ficha	 is not the name of any specification
+ não é o nome de nenhuma ficha do .ids.	 is not the name of any specification in the .ids.
+ · <span class="f">identidade sem ficha 	 · <span class="f">identity without specification 
+ · <span class="o">ok 	 · <span class="o">ok 
+ · com elementos no modelo: 	 · with elements in the model: 
+ · esquema 	 · schema 
+ · exportador do Revit 	 · Revit exporter 
+ · verificações: 	 · checks: 
+(identidade sem ficha)	(identity without specification)
+)</span> · <span class="f">falham 	)</span> · <span class="f">fail 
+, ID Revit 	, Revit ID 
+: sai USERDEFINED com ObjectType = 	: exported as USERDEFINED with ObjectType = 
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>	<!doctype html><html lang="en"><head><meta charset="utf-8"><title>
+</h1><p class="m">Pré-validação do BIMinFormation em 	</h1><p class="m">BIMinFormation pre-validation on 
+</p><p class="m">Ok: o modelo atende (as quantidades, quando pedidas, são calculadas pelo exportador). 	</p><p class="m">Ok: the model meets it (quantities, when required, are calculated by the exporter). 
+</span> · <span class="c">a conferir 	</span> · <span class="c">to check 
+</td><td class="n c">	</td><td class="n c">
+</td><td class="n f">	</td><td class="n f">
+</td><td class="n o">	</td><td class="n o">
+</td><td class="n">	</td><td class="n">
+<h2>Defeitos encontrados nos .ids</h2>	<h2>Defects found in the .ids files</h2>
+<h2>O que o software não entrega como o .ids pede</h2>	<h2>What the software does not deliver as the .ids requires</h2>
+<h2>Progresso por ficha</h2>	<h2>Progress by specification</h2>
+<h2>Progresso por sistema</h2><table><tr><th>Sistema</th><th>Fichas</th><th>Verificações</th><th>Ok</th><th>Falham</th><th>A conferir</th><th>% ok</th></tr>	<h2>Progress by system</h2><table><tr><th>System</th><th>Specifications</th><th>Checks</th><th>Ok</th><th>Fail</th><th>To check</th><th>% ok</th></tr>
+<h2>Resumo</h2><p>Fichas ativas: 	<h2>Summary</h2><p>Active specifications: 
+<p class="m">Exigências que o exportador do Revit 	<p class="m">Requirements that the Revit exporter 
+<p class="m">Problemas de redação nos arquivos recebidos; corrigir é com o autor do .ids.</p>	<p class="m">Writing problems in the files received; fixing them is up to the author of the .ids.</p>
+<p class="m">… e mais 	<p class="m">… and 
+<p>Nenhum elemento com ficha no modelo.</p>	<p>No element with a specification in the model.</p>
+<p>Nenhum limite encontrado para as fichas ativas.</p>	<p>No limitation found for the active specifications.</p>
+<table><tr><th>Arquivo</th><th>Ficha</th><th>Código</th><th>Problema</th></tr>	<table><tr><th>File</th><th>Specification</th><th>Code</th><th>Problem</th></tr>
+<table><tr><th>Ficha</th><th>Elementos</th><th>Ok</th><th>Falham</th><th>A conferir</th><th>% ok</th><th>Pendências mais comuns</th></tr>	<table><tr><th>Specification</th><th>Elements</th><th>Ok</th><th>Fail</th><th>To check</th><th>% ok</th><th>Most common pending items</th></tr>
+<table><tr><th>Ficha</th><th>Exigência</th><th>Motivo</th></tr>	<table><tr><th>Specification</th><th>Requirement</th><th>Reason</th></tr>
+A conferir	To check
+A conferir: só o IFC confirma (material, classificação, Pset padrão vazio que o exportador pode calcular).</p>	To check: only the IFC confirms it (material, classification, empty standard Pset that the exporter may calculate).</p>
+Arquivo .ids	.ids file
+BIMinFormation — 	BIMinFormation — 
+Categoria	Category
+Elemento	Element
+Elementos	Elements
+Em uso	In use
+Exigência	Requirement
+Falha na pré-validação (	Pre-validation failure (
+Falham	Fail
+Ficha	Specification
+GlobalId	GlobalId
+ID Revit	Revit ID
+Identidade sem ficha: 	Identity without specification: 
+Motivo	Reason
+Nenhum.	None.
+Ok	Ok
+Sistema	System
+Situação	Status
+Situação do elemento	Element status
+Uso no .ids	Use in the .ids
+a conferir	to check
+classificação	classification
+dd/MM/yyyy HH:mm	yyyy-MM-dd HH:mm
+falha	fail
+identidade	identity
+não	no
+obrigatória	required
+ok no modelo	ok in the model
+opcional	optional
+passa	pass
+proibida	prohibited
+sim	yes
+tipo predefinido	predefined type
+
+# src/BIMinFormation.Core/Prevalidation/Prevalidator.cs
+ (instrução: 	 (instruction: 
+(restrição)	(restriction)
+(sem nome)	(no name)
+a ficha proíbe e o elemento tem	the specification prohibits it and the element has it
+atributo 	attribute 
+atributo ausente	attribute missing
+atributo vazio	attribute empty
+conferir na modelagem (	check in the model (
+conferir no IFC (	check in the IFC (
+conjunto ausente	property set missing
+código fora do pedido	code outside what is required
+defeito do .ids: atributo sem nome, nenhum modelo atende	.ids defect: attribute without a name, no model can meet it
+entidade	entity
+entidade diferente	different entity
+faz parte de 	is part of 
+material fora do pedido	material outside what is required
+o exportador não escreve como o .ids pede: 	the exporter does not write it as the .ids requires: 
+o exportador pode preencher (	the exporter may fill it in (
+propriedade ausente	property missing
+propriedade não comparável	property not comparable
+relação ausente	relationship missing
+relação com outra entidade	relationship with another entity
+relação com outro tipo predefinido	relationship with another predefined type
+sem classificação	no classification
+sem material	no material
+sistema fora do pedido	system outside what is required
+tipo de dado diferente	different data type
+tipo predefinido diferente	different predefined type
+valor fora do pedido	value outside what is required
+vazio no modelo; o exportador pode calcular	empty in the model; the exporter may calculate it
+
+# src/BIMinFormation.Core/Profile/ProfileStatus.cs
+ arquivo(s), 	 file(s), 
+ aviso(s)	 warning(s)
+ erro(s) nos .ids: as fichas afetadas podem não ser verificáveis.	 error(s) in the .ids files: the affected specifications may not be verifiable.
+ exporta IFC 4.3 só na Vista de Referência, que não grava quantidades 	 exports IFC 4.3 only in the Reference View, which does not write quantities 
+ ficha(s)	 specification(s)
+ não está entre os declarados nos .ids.	 is not among those declared in the .ids files.
+(Qto_). O plugin ajuda a preencher e a pré-validar, mas o IFC entregável precisa do Revit 2026 ou 	(Qto_). The plugin helps to fill in and pre-validate, but the deliverable IFC requires Revit 2026 or 
+) não exporta 	) does not export 
+) só tem o IFC 4.3 	) only has the 
+. O plugin ajuda a preencher e a pré-validar, mas o IFC 	. The plugin helps to fill in and pre-validate, but the 
+A mesma ficha aparece em mais de um arquivo (ex.: fases diferentes): escolha só os arquivos da fase.	The same specification appears in more than one file (e.g. different phases): choose only the files of the phase.
+Arquivo do perfil não encontrado: 	Profile file not found: 
+Escolha a pasta com os arquivos .ids recebidos do contratante.	Choose the folder with the .ids files received from the client.
+Escolha o esquema IFC alvo no perfil.	Choose the target IFC schema in the profile.
+Esquema alvo do perfil inválido: 	Invalid target schema in the profile: 
+Nenhum arquivo .ids na pasta.	No .ids file in the folder.
+O Revit 	Revit 
+O esquema alvo 	The target schema 
+Pasta não encontrada: 	Folder not found: 
+Versões IFC misturadas nos arquivos: 	Mixed IFC versions in the files: 
+a preencher e a pré-validar, mas o IFC entregável precisa do Revit 2026 ou mais novo.	to fill in and pre-validate, but the deliverable IFC requires Revit 2026 or newer.
+entregável precisa de uma versão do Revit que exporte esse esquema.	deliverable IFC requires a Revit version that exports this schema.
+experimental: grava o cabeçalho IFC4X3 (não IFC4X3_ADD2) e não exporta quantidades. O plugin ajuda 	experimental IFC 4.3: it writes the IFC4X3 header (not IFC4X3_ADD2) and does not export quantities. The plugin helps 
+mais novo (Vista de Transferência de Projeto IFC4x3).	newer (IFC4x3 Design Transfer View).
+
+# src/BIMinFormation.Core/Profile/ProjectProfile.cs
+Perfil gravado por uma versão mais nova do plugin (	Profile saved by a newer version of the plugin (
+
+# src/BIMinFormation.Exporter/DataTypeMap.cs
+ não tem tipo para 	 has no type for 
+; a propriedade sairia como texto e reprovaria. Comunique o contratante.	; the property would be exported as text and fail. Let the client know.
+O Revit não tem especificação para 	Revit has no specification type for 
+potência elétrica (troque para HvacPower no perfil se for climatização)	electrical power (change to HvacPower in the profile for HVAC)
+pressão de HVAC	HVAC pressure
+sem unidade no Revit: o valor é gravado como número em pascal	no unit in Revit: the value is written as a number in pascals
+sem unidade no Revit: o valor é gravado como número em watts	no unit in Revit: the value is written as a number in watts
+temperatura de HVAC	HVAC temperature
+vazão de ar (troque para Flow no perfil se for hidráulica)	air flow (change to Flow in the profile for plumbing)
+velocidade de HVAC	HVAC velocity
+
+# src/BIMinFormation.Exporter/ValueOrigins.cs
+ (ou 	 (or 
+ (padrão), mas o IDS pede 	 (standard), but the IDS requires 
+ escrito pelo exportador	 written by the exporter
+ no padrão, mas o IDS pede 	 in the standard, but the IDS requires 
+ não gera 	 does not generate 
+ padrão de 	 in the standard of 
+ sai como 	 is exported as 
+ é 	 is 
+' não faz parte de 	' is not part of 
+' não é um 	' is not a 
+, ou pelo parâmetro 	, or through the parameter 
+: o exportador só calcula as quantidades do conjunto padrão	: the exporter only calculates the quantities of the standard set
+Classificação (IFC_EXPORT_ELEMENT_AS e tipo predefinido)	Classification (IFC_EXPORT_ELEMENT_AS and predefined type)
+Classificação (tipo predefinido)	Classification (predefined type)
+atributo sem nome definido: conferir pelo texto de instructions	attribute without a defined name: check against the instructions text
+calculada com 'Exportar quantidades base'	calculated with 'Export base quantities'
+calculada com 'Exportar quantidades base' (BaseQuantities do IFC2X3)	calculated with 'Export base quantities' (IFC2X3 BaseQuantities)
+material do elemento no Revit	element material in Revit
+nome de conjunto ou propriedade por restrição: conferir à mão	property set or property name given by a restriction: check by hand
+o exportador do Revit 	the Revit exporter 
+parâmetro 	parameter 
+parâmetro ClassificationCode ([Sistema]Código:Descrição)	ClassificationCode parameter ([System]Code:Description)
+relação do modelo (nível, montagem, grupo, hospedeiro)	model relationship (level, assembly, group, host)
+sai num conjunto do usuário com esse nome	it is exported in a user property set with that name
+sem dataType no IDS: sai como texto (Label)	no dataType in the IDS: exported as text (Label)
+
+# src/BIMinFormation.Ids/IdsAuditor.cs
+ (ausente)	 (missing)
+ (inteiro, sem casas decimais)	 (integer, no decimal places)
+ (número com ponto decimal, ex.: 42.3)	 (number with a decimal point, e.g. 42.3)
+ (use 'true' ou 'false', em minúsculas)	 (use 'true' or 'false', in lowercase)
+ O IfcTester aceita e lê qualquer texto diferente de 'false' como verdadeiro.	 IfcTester accepts it and reads any text other than 'false' as true.
+ atende à restrição do nome	 meets the name restriction
+ não é texto.	 is not text.
+ é derivado e não pode ser verificado	 is derived and cannot be checked
+ é inverso e não pode ser verificado	 is inverse and cannot be checked
+' de 	' of 
+' deve ser escrita em maiúsculas (ex.: IFCWALL).	' must be written in uppercase (e.g. IFCWALL).
+' inválida.	' is invalid.
+' inválido (só letras maiúsculas, ex.: IFCLABEL).	' is invalid (uppercase letters only, e.g. IFCLABEL).
+' inválido para 	' is invalid for 
+' não existe em 	' does not exist in 
+' não reconhecido nesta versão do plugin.	' is not recognized by this version of the plugin.
+' não tem tipo predefinido em 	' has no predefined type in 
+' usa o prefixo dos conjuntos padrão, mas não existe em 	' uses the prefix of the standard sets, but does not exist in 
+) não tem valor simples: só dá para exigir que exista (	) has no simple value: it can only be required to exist (
+): nenhum elemento pode passar.	): no element can pass.
+. O exportador do Revit descarta propriedades fora do conjunto padrão.	. The Revit exporter drops properties outside the standard set.
+. O exportador do Revit trata como conjunto do usuário.	. The Revit exporter treats it as a user property set.
+: pela norma não casa com nenhum elemento.	: by the standard it matches no element.
+Atributo '	Attribute '
+Entidade '	Entity '
+Entidade com nome vazio.	Entity with an empty name.
+Especificação proibida (maxOccurs=0) não pode ter requirements.	A prohibited specification (maxOccurs=0) cannot have requirements.
+Nenhum atributo de 	No attribute of 
+O requisito de entidade não aceita a entidade do applicability (	The entity requirement does not accept the applicability entity (
+Pattern inválido '	Invalid pattern '
+Valor '	Value '
+Valor de enumeração '	Enumeration value '
+applicability sem facetas: a especificação não se aplica a nenhum elemento.	applicability without facets: the specification applies to no element.
+attribute com nome vazio: a exigência só pode ser entendida pelo texto de 	attribute with an empty name: the requirement can only be understood from the text of 
+dataType '	dataType '
+maxOccurs menor que minOccurs.	maxOccurs less than minOccurs.
+minOccurs/maxOccurs fora das combinações do IDS 1.0 (1..unbounded, 0..unbounded, 0..0); 	minOccurs/maxOccurs outside the IDS 1.0 combinations (1..unbounded, 0..unbounded, 0..0); 
+property com propertySet ou baseName vazio.	property with an empty propertySet or baseName.
+property com valor e sem dataType: a comparação tipada fica indefinida.	property with a value and no dataType: the typed comparison is undefined.
+relation '	relation '
+tratado como 	treated as 
+xs:pattern só se aplica a texto; 	xs:pattern only applies to text; 
+
+# src/BIMinFormation.Ids/IdsLibrary.cs
+ arquivos: 	 files: 
+A ficha aparece em 	The specification appears in 
+
+# src/BIMinFormation.Ids/IdsParser.cs
+' inválido (aceitos: IFC2X3, IFC4, IFC4X3_ADD2).	' is invalid (accepted: IFC2X3, IFC4, IFC4X3_ADD2).
+' inválido para <	' is invalid for <
+' não é um inteiro não negativo nem 'unbounded'.	' is not a non-negative integer nor 'unbounded'.
+> sem <	> without <
+> sem <simpleValue> nem <xs:restriction>.	> without <simpleValue> or <xs:restriction>.
+Elemento não previsto no IDS 1.0: <	Element not defined in IDS 1.0: <
+Especificação sem ifcVersion.	Specification without ifcVersion.
+Especificação sem o atributo name.	Specification without the name attribute.
+Falta <applicability>.	<applicability> is missing.
+Falta <info>.	<info> is missing.
+Falta <info>/<title>.	<info>/<title> is missing.
+Falta <specifications>.	<specifications> is missing.
+Nenhuma especificação no arquivo.	No specification in the file.
+O elemento raiz não é <ids:ids> no namespace 	The root element is not <ids:ids> in the namespace 
+XML inválido: 	Invalid XML: 
+cardinality '	cardinality '
+cardinality só é permitido em <requirements>.	cardinality is only allowed in <requirements>.
+ifcVersion '	ifcVersion '
+partOf sem <entity>.	partOf without <entity>.
+
+# src/BIMinFormation.Revit/Adapter/ExportConfiguration.cs
+Configuração sem versão IFC.	Setup without an IFC version.
+
+# src/BIMinFormation.Revit/Adapter/IfcExport.cs
+BIMinFormation: exportação IFC	BIMinFormation: IFC export
+
+# src/BIMinFormation.Revit/Adapter/ModelReader.cs
+entidade e atributos	entity and attributes
+propriedades do mapeamento	mapped properties
+índice de parâmetros	parameter index
+
+# src/BIMinFormation.Revit/Adapter/ParameterWriter.cs
+ não pode ser aplicada: 	 cannot be applied: 
+' não guarda valor simples.	' does not hold a simple value.
+' é somente leitura em 	' is read-only in 
+A ficha 	The specification 
+Criado pelo BIMinFormation	Created by BIMinFormation
+Especificação desconhecida: 	Unknown specification type: 
+O Revit não abriu o arquivo de parâmetros 	Revit did not open the parameters file 
+Parâmetro 	Parameter 
+Parâmetro '	Parameter '
+Sem especificação do Revit para 	No Revit specification type for 
+
+# src/BIMinFormation.Revit/Adapter/ProfileStorage.cs
+Perfil do projeto do BIMinFormation (JSON).	BIMinFormation project profile (JSON).
+
+# src/BIMinFormation.Revit/Adapter/Revit2027Export.cs
+O Revit recusou o arquivo de PropertySets: 	Revit rejected the PropertySets file: 
+
+# src/BIMinFormation.Revit/Adapter/RuntimeExporter.cs
+catálogo embutido (Revit 	embedded catalog (Revit 
+instalação (	installation (
+
+# src/BIMinFormation.Revit/App.cs
+Abre a exportação IFC do Revit com a configuração que as fichas pedem (versão, quantidades e conjuntos). Exporte sempre por este botão: ele refaz o mapeamento do projeto atual antes de abrir a janela e avisa o que não vai passar.	Opens the Revit IFC export with the setup the specifications require (version, quantities and property sets). Always export with this button: it rebuilds the mapping of the current project before opening the dialog and warns about what will not pass.
+Classificação	Classification
+Confere as fichas no modelo antes de exportar: o que passa, o que falha e por quê.	Checks the specifications in the model before exporting: what passes, what fails and why.
+Configurações	Settings
+Escolhe a pasta dos .ids e mostra o que foi encontrado. Também gera o arquivo de PropertySets avulso e limpa parâmetros.	Chooses the .ids folder and shows what was found. It also generates the standalone PropertySets file and cleans up parameters.
+Escolhe, para cada elemento, a ficha do .ids que vale para ele.	Chooses, for each element, the .ids specification that applies to it.
+Exportar\nIFC	Export\nIFC
+Mostra o que a ficha exige e grava os valores nos parâmetros do Revit.	Shows what the specification requires and writes the values to the Revit parameters.
+Preencher\nParâmetros	Fill In\nParameters
+Protocolo	Protocol
+Pré-\nvalidação	Pre-\nvalidation
+Sobre	About
+Versão, autoria e licença do BIMinFormation.	Version, authorship and license of BIMinFormation.
+
+# src/BIMinFormation.Revit/Commands/Commands.cs
+ aviso(s) do mapeamento	 mapping warning(s)
+ aviso(s):	 warning(s):
+ conjunto(s), 	 property set(s), 
+ parâmetro(s) apagado(s)	 parameter(s) deleted
+ propriedade(s).	 property(ies).
+ — Exportar IFC	 — Export IFC
+ — Licença MIT\n	 — MIT License\n
+ — PropertySets	 — PropertySets
+ — Sobre	 — About
+A configuração foi gravada no projeto. Na janela de exportação, selecione-a na lista de configurações.	The setup was saved in the project. In the export dialog, select it in the list of setups.
+A janela de exportação abre em seguida.	The export dialog opens next.
+Abra um projeto do Revit.	Open a Revit project.
+Abrir as Configurações	Open Settings
+Ainda falta configurar os .ids	The .ids files are not set up yet
+Ajuda a preencher o modelo, desde a modelagem, com o que os .ids (buildingSMART IDS 1.0) exigem do IFC.\n\n	Helps fill in the model, from the modeling stage, with what the .ids files (buildingSMART IDS 1.0) require from the IFC.\n\n
+Arquivo de PropertySets gerado	PropertySets file generated
+As fichas só pedem Psets e Qtos padrão: não há conjunto do usuário.	The specifications only require standard Psets and Qtos: there is no user property set.
+BIMinFormation: perfil do projeto	BIMinFormation: project profile
+Configure os .ids do projeto	Set up the project's .ids files
+Escolha a configuração "	Choose the setup "
+Este Revit não exporta o que as fichas pedem	This Revit does not export what the specifications require
+Falha ao gerar o arquivo de PropertySets	Failed to generate the PropertySets file
+Formato: 	Format: 
+Na exportação IFC:	In the IFC export:
+Nada a mapear	Nothing to map
+O modelo não foi salvo.	The model was not saved.
+PropertySets do usuário (*.txt)|*.txt	User PropertySets (*.txt)|*.txt
+Salvar o arquivo de PropertySets	Save the PropertySets file
+… e mais 	… and 
+
+# src/BIMinFormation.Revit/Services/ClassificationService.cs
+\nFalhas: 	\nFailures: 
+\nSem alterações: 	\nUnchanged: 
+ (escolha o tipo predefinido)	 (choose the predefined type)
+ (já)	 (already)
+ fichas aplicáveis	 applicable specifications
+ · nível 	 · level 
+(alternativa: escolha à mão)	(alternative: choose by hand)
+(ficha sem entity)	(specification without entity)
+(inferido) 	(inferred) 
+(sem ficha: 	(no specification: 
+(tipo) 	(type) 
+(vazio)	(empty)
+: elemento não existe mais	: element no longer exists
+Aplicados: 	Applied: 
+BIMinFormation: Classificação	BIMinFormation: Classification
+escolha o tipo predefinido da ficha	choose the specification's predefined type
+
+# src/BIMinFormation.Revit/Services/ExportService.cs
+\nFichas: 	\nSpecifications: 
+\nFormato: 	\nFormat: 
+ (Exportar)	 (Export)
+); exportador do Revit 	); Revit exporter 
+Arquivo de PropertySets gerado pelo BIMinFormation 	PropertySets file generated by BIMinFormation 
+BIMinFormation: configuração de exportação IFC	BIMinFormation: IFC export setup
+yyyy-MM-dd HH:mm	yyyy-MM-dd HH:mm
+
+# src/BIMinFormation.Revit/Services/FillService.cs
+\nInválidos: 	\nInvalid: 
+\nJá corretos: 	\nAlready correct: 
+\nPendentes: 	\nPending: 
+ como 	 as 
+ fichas	 specifications
+ para 	 for 
+), e esta ficha pede 	), and this specification requires 
+BIMinFormation: Preencher Parâmetros	BIMinFormation: Fill In Parameters
+Booleano	Boolean
+Comprimento (m)	Length (m)
+Corrente (A)	Current (A)
+Edifício	Building
+Gravados: 	Written: 
+Inteiro	Integer
+Massa (kg)	Mass (kg)
+Número (	Number (
+Potência (W)	Power (W)
+Projeto	Project
+Tensão (V)	Voltage (V)
+Terreno	Site
+Texto	Text
+Vazão (m³/s)	Flow rate (m³/s)
+Volume (m³)	Volume (m³)
+alterado	changed
+automático	automatic
+calculado	calculated
+conflito entre fichas: 	conflict between specifications: 
+inválido	invalid
+manual	manual
+não exportável	not exportable
+não gravável: 	not writable: 
+o exportador escreve 	the exporter writes 
+o parâmetro do Revit aceita só número inteiro	the Revit parameter only accepts integers
+parâmetro padrão não instalado: 	standard parameter not installed: 
+pendente	pending
+proibido	prohibited
+vinculado	linked
+vínculo vazio	empty link
+Área (m²)	Area (m²)
+Ângulo (rad)	Angle (rad)
+
+# src/BIMinFormation.Revit/Services/PaneController.cs
+Abra um projeto com o perfil configurado.	Open a project with the profile set up.
+BIMinFormation — Conformidade	BIMinFormation — Compliance
+
+# src/BIMinFormation.Revit/Services/ParameterCleanup.cs
+BIMinFormation: limpar parâmetros	BIMinFormation: clean up parameters
+
+# src/BIMinFormation.Revit/Services/PluginContext.cs
+Defina o esquema IFC alvo em Configurações (os .ids misturam versões).	Set the target IFC schema in Settings (the .ids files mix versions).
+
+# src/BIMinFormation.Revit/Services/PrevalidationService.cs
+ quantidade(s) calculada(s) pelo exportador	 quantity(ies) calculated by the exporter
+falha no IFC	fails in the IFC
+passa no IFC	passes in the IFC
+
+# src/BIMinFormation.Revit/Services/ProbeService.cs
+BIMinFormation: conferência no IFC	BIMinFormation: check in the IFC
+O Revit não gerou o IFC de conferência.	Revit did not generate the check IFC.
+
+# src/BIMinFormation.Revit/Services/RevitQueue.cs
+Falha em 	Failed in 
+
+# src/BIMinFormation.Revit/Services/SpecificationUse.cs
+BIMinFormation: fichas em uso	BIMinFormation: specifications in use
+
+# src/BIMinFormation.Revit/UI/ClassificationForm.cs
+ · A aplicar: 	 · To apply: 
+ · Com ficha: 	 · With specification: 
+ · Fichas: 	 · Specifications: 
+ · Selecionados: 	 · Selected: 
+Aplicar	Apply
+BIMinFormation — Classificação	BIMinFormation — Classification
+BIMinFormation — Classificação — 	BIMinFormation — Classification — 
+Classificar seleção	Classify selection
+Classificar seleção (	Classify selection (
+ELEMENTO	ELEMENT
+ESPECIFICAÇÃO DO IDS	IDS SPECIFICATION
+Elementos: 	Elements: 
+Fechar	Close
+Há fichas escolhidas e não aplicadas. Fechar descarta essas escolhas. Continuar?	There are chosen specifications that were not applied. Closing discards these choices. Continue?
+aplicar a Classificação	apply the Classification
+
+# src/BIMinFormation.Revit/UI/CleanupForm.cs
+ deles com valores, que serão perdidos	 of them with values, which will be lost
+ elemento(s)	 element(s)
+ parâmetro(s) serão apagados do projeto	 parameter(s) will be deleted from the project
+. Continuar?	. Continue?
+APAGAR	DELETE
+Apagar	Delete
+Apagar (	Delete (
+Apagar remove o parâmetro e os valores dele. Os do mapeamento atual não podem ser apagados.	Delete removes the parameter and its values. Those in the current mapping cannot be deleted.
+BIMinFormation — Limpar parâmetros do plugin	BIMinFormation — Clean up plugin parameters
+COM VALOR	WITH VALUE
+Cancelar	Cancel
+Nenhum parâmetro do plugin no projeto.	No plugin parameter in the project.
+PARÂMETRO	PARAMETER
+SITUAÇÃO	STATUS
+fora do mapeamento	outside the mapping
+nenhum	none
+no mapeamento atual	in the current mapping
+
+# src/BIMinFormation.Revit/UI/ConformityPane.cs
+ de 	 of 
+ · a conferir 	 · to check 
+ · falham 	 · fail 
+ · identidade sem ficha 	 · identity without specification 
+Abrir pré-validação	Open pre-validation
+Atualiza alguns segundos depois de cada alteração. Duplo clique abre a pré-validação na ficha.	Updates a few seconds after each change. Double-click opens the pre-validation on the specification.
+Atualizar	Refresh
+Nenhum elemento com ficha ainda. Classifique os elementos para acompanhar aqui.	No element with a specification yet. Classify the elements to follow them here.
+
+# src/BIMinFormation.Revit/UI/FillForm.cs
+ (no tipo)	 (on the type)
+ elemento(s) de 	 element(s) of 
+ elemento(s). O modelo não é salvo automaticamente. Continuar?	 element(s). The model is not saved automatically. Continue?
+ propriedade(s) em 	 property(ies) in 
+ recusado(s) (o destino não aceita o valor)	 rejected (the target does not accept the value)
+ valor(es) colado(s) em 	 value(s) pasted into 
+ valor(es) copiado(s) de 	 value(s) copied from 
+ · A gravar: 	 · To write: 
+ · Pendências: 	 · Pending: 
+ · Sem ficha: 	 · Without specification: 
+ · elemento: 	 · element: 
+": o exportador lê o valor na hora de exportar.	": the exporter reads the value at export time.
+(misto)	(mixed)
+(sem material)	(no material)
+(todas)	(all)
+. Confira e clique em Aplicar.	. Check and click Apply.
+. Selecione os elementos e cole (Ctrl+V).	. Select the elements and paste (Ctrl+V).
+Aplicar (	Apply (
+BIMinFormation — Preencher Parâmetros	BIMinFormation — Fill In Parameters
+BIMinFormation — Preencher Parâmetros — 	BIMinFormation — Fill In Parameters — 
+BIMinFormation: vínculo	BIMinFormation: link
+Buscar:	Search:
+Calculado pelo plugin (material do elemento) e regravado a cada Aplicar e Exportar.	Calculated by the plugin (element material) and written again on every Apply and Export.
+Colar valores	Paste values
+Colar valores (	Paste values (
+Copiar valores	Copy values
+FICHA	SPECIFICATION
+Ficha:	Specification:
+Instrução do .ids: 	.ids instruction: 
+No modelo: 	In the model: 
+PENDÊNCIAS	PENDING
+PROPRIEDADE	PROPERTY
+Parâmetro: 	Parameter: 
+Serão gravadas 	To be written: 
+Só com pendências	Pending only
+TIPO	TYPE
+VALOR	VALUE
+Valores: 	Values: 
+Vinculado ao parâmetro do Revit "	Linked to the Revit parameter "
+Vincular ao Revit...	Link to Revit...
+aplicar o Preencher	apply Fill In Parameters
+vincular ao Revit	link to Revit
+
+# src/BIMinFormation.Revit/UI/LinkForm.cs
+ (desmarcado: para todas as entidades com esta propriedade)	 (unchecked: for all entities with this property)
+ parâmetro(s) compatível(is)	 compatible parameter(s)
+BIMinFormation — Vincular ao Revit	BIMinFormation — Link to Revit
+Material do elemento (calculado pelo plugin)	Element material (calculated by the plugin)
+O exportador lê o parâmetro vinculado na hora de exportar: o valor fica sempre atual e o plugin não cria parâmetro novo.	The exporter reads the linked parameter at export time: the value is always current and the plugin does not create a new parameter.
+Onde	Where
+Parâmetro do Revit	Revit parameter
+Sem vínculo	No link
+Sugestão	Suggestion
+Só para 	Only for 
+Valor (como sai no IFC)	Value (as exported to the IFC)
+Vincular	Link
+camadas	layers
+instância	instance
+tipo	type
+
+# src/BIMinFormation.Revit/UI/PrevalidationForm.cs
+ (obrigatória no .ids; nenhum elemento)	 (required in the .ids; no element)
+ elemento(s) coloridos em "	 element(s) colored in "
+ estavam a conferir)	 were to be checked)
+ ficha(s) obrigatória(s) no .ids sem elemento no modelo	 specification(s) required in the .ids with no element in the model
+ fora da ficha no IFC	 outside the specification in the IFC
+ não saíram no IFC	 not exported to the IFC
+ tópico(s) em 	 topic(s) in 
+ verificação(ões) decidida(s) pelo IFC (	 check(s) decided by the IFC (
+ · conferido no IFC (	 · checked in the IFC (
+ · identidade sem ficha: 	 · identity without specification: 
+". As cores saem ao desmarcar ou fechar a janela.	". The colors are removed when you uncheck or close the window.
+(nenhum elemento do modelo)	(no element in the model)
+, a conferir 	, to check 
+, falham 	, fail 
+. Atualizar volta ao resultado só do modelo.	. Refresh goes back to the model-only result.
+A CONFERIR	TO CHECK
+A vista ativa não aceita cores (tabela, folha…): abra uma vista de planta, corte ou 3D.	The active view does not accept colors (schedule, sheet…): open a plan, section or 3D view.
+APLICÁVEIS	APPLICABLE
+BCF 2.1 (*.bcf)|*.bcf	BCF 2.1 (*.bcf)|*.bcf
+BIMinFormation — Pré-validação — 	BIMinFormation — Pre-validation — 
+BIMinFormation: cores da pré-validação	BIMinFormation: pre-validation colors
+BIMinFormation: limpar cores	BIMinFormation: clear colors
+CSV (*.csv)|*.csv	CSV (*.csv)|*.csv
+Colorir a vista ativa	Color the active view
+Conferir no IFC	Check in the IFC
+Conferência no IFC não feita.	Check in the IFC not done.
+Exporta um IFC temporário, como o botão Exportar, e avalia as fichas nele: o que está a conferir 	Exports a temporary IFC, like the Export button, and evaluates the specifications on it: what is to be checked 
+Exportando o IFC de conferência… (o Revit fica ocupado durante a exportação)	Exporting the check IFC… (Revit is busy during the export)
+FALHAM	FAIL
+Falhas em BCF...	Failures as BCF...
+Fichas com elementos: 	Specifications with elements: 
+Gravado: 	Saved: 
+Identidade sem ficha (EOI que não casa com nenhuma ficha)	Identity without specification (EOI that matches no specification)
+MOTIVO	REASON
+Mostra ou esconde o painel de conformidade ao lado da vista (atualiza enquanto você modela).	Shows or hides the compliance panel next to the view (it updates while you model).
+Não deu para conferir no IFC:	Could not check in the IFC:
+Não deu para gravar: 	Could not save: 
+OK	OK
+Ok no modelo: só faltam quantidades do exportador. Duplo clique aproxima.	Ok in the model: only the exporter quantities are missing. Double-click zooms in.
+Painel	Panel
+Painel de conformidade aberto ao lado da vista.	Compliance panel opened next to the view.
+Painel de conformidade fechado.	Compliance panel closed.
+Passam, ou estão ok no modelo e só faltam as quantidades que o exportador calcula.	Pass, or are ok in the model and only the quantities the exporter calculates are missing.
+Pendências (CSV)...	Pending items (CSV)...
+Pendências da pré-validação	Pre-validation pending items
+Página (*.html)|*.html	Page (*.html)|*.html
+Quadro de fichas do projeto para o BEP	Project specification table for the BEP
+Quadro de fichas para o BEP (CSV)...	Specification table for the BEP (CSV)...
+Relatório para o contratante	Report for the client
+Relatório para o contratante...	Report for the client...
+Salvar ▾	Save ▾
+Só fichas com elementos	Only specifications with elements
+Só o IFC confirma: material, Pset padrão vazio, classificação, atributos que o exportador preenche.	Only the IFC confirms it: material, empty standard Pset, classification, attributes the exporter fills in.
+Tópicos BCF das falhas	BCF topics of the failures
+colorir a vista	color the view
+conferência no IFC	check in the IFC
+limpar as cores	clear the colors
+o .ids marca a ficha como obrigatória; vale se o BEP pede esta ficha no projeto	the .ids marks the specification as required; it applies if the BEP requires this specification in the project
+painel de conformidade	compliance panel
+sem ficha	no specification
+vira passa ou falha. O modelo não muda. Em modelos grandes leva o tempo de uma exportação.	becomes pass or fail. The model does not change. On large models it takes as long as an export.
+
+# src/BIMinFormation.Revit/UI/SettingsForm.cs
+Apaga do projeto os parâmetros do plugin que o mapeamento atual não usa.	Deletes from the project the plugin parameters the current mapping does not use.
+Arquivo avulso, para exportar sem o botão Exportar IFC.	Standalone file, to export without the Export IFC button.
+Arquivo de parâmetros compartilhados do plugin	Plugin shared parameters file
+Arquivos ativos:	Active files:
+Automático (dos .ids)	Automatic (from the .ids files)
+Automático (idioma do Revit)	Automatic (Revit language)
+BIMinFormation — Configurações	BIMinFormation — Settings
+Esconder no Preencher as exigências sem valor a preencher	Hide in Fill In Parameters the requirements with no value to fill in
+Esquema IFC alvo:	Target IFC schema:
+Exportar perfil...	Export profile...
+Falha ao ler os .ids: 	Failed to read the .ids files: 
+Gera o arquivo de PropertySets das fichas em uso, com os avisos e as opções de exportação.	Generates the PropertySets file of the specifications in use, with the warnings and the export options.
+Idioma:	Language:
+Importar perfil...	Import profile...
+Limpar parâmetros...	Clean up parameters...
+Mapear todas as fichas da pasta (por padrão, só as fichas em uso no modelo)	Map all specifications in the folder (by default, only those in use in the model)
+Marcar todos	Check all
+O .rvt não é salvo: o perfil entra no modelo e você salva quando quiser.	The .rvt is not saved: the profile goes into the model and you save it when you want.
+Parâmetros compartilhados (*.txt)|*.txt	Shared parameters (*.txt)|*.txt
+Parâmetros:	Parameters:
+Pasta com os arquivos .ids recebidos (lida recursivamente)	Folder with the .ids files received (read recursively)
+Pasta dos .ids:	.ids folder:
+Perfil do BIMinFormation (*.json)|*.json	BIMinFormation profile (*.json)|*.json
+Perfil inválido: 	Invalid profile: 
+Salvar no projeto	Save to project
+Salvar...	Save...
+Selecionar...	Select...
+Situação:	Status:
+do plugin	of the plugin
+
+# src/BIMinFormation.Revit/UI/SpecPickerForm.cs
+ linhas selecionadas	 selected rows
+(padrão)	(standard)
+0000 de 0000 fichas	0000 of 0000 specifications
+Aplicar a 	Apply to 
+Arquivo	File
+BIMinFormation — Escolher ficha	BIMinFormation — Choose specification
+Entidade	Entity
+Limpar	Clear
+Pesquisar:	Search:
+Tipo predefinido:	Predefined type:
+
+# src/BIMinFormation.Revit/UI/SyncedForm.cs
+aproximar a vista	zoom the view
+atualizar a grade	refresh the grid
+fechar janela	close the window
+selecionar no Revit	select in Revit
+
+# src/BIMinFormation.Rules/Ifc/IfcModelReader.cs
+Esquema IFC não suportado: 	Unsupported IFC schema: 
+
+# src/BIMinFormation.Rules/RequirementPlanner.cs
+restrição	restriction
+
+# src/BIMinFormation.Rules/Results.cs
+ aplicáveis, 	 applicable, 
+ com falha)	 failing)
+
+# src/BIMinFormation.Rules/State.cs
+ itens)	 items)

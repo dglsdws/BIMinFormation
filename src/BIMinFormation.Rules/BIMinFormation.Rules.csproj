@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>BIMinFormation.Rules</RootNamespace>
+    <Description>Motor de regras do IDS 1.0: avalia especificações sobre o estado de elementos.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BIMinFormation.Ids\BIMinFormation.Ids.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BIMinFormation.Rules.Tests" />
+  </ItemGroup>
+
+</Project>

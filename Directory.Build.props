@@ -1,0 +1,32 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Deterministic>true</Deterministic>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <Version>0.1.0</Version>
+    <Company>Douglas W. Santos</Company>
+    <Product>BIMinFormation</Product>
+    <Authors>Douglas W. Santos</Authors>
+    <Copyright>© 2026 Douglas W. Santos. Licença MIT.</Copyright>
+    <RepositoryUrl>https://github.com/dglsdws/BIMinFormation</RepositoryUrl>
+    <NeutralLanguage>pt-BR</NeutralLanguage>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+
+  <!--
+    Versão do Revit dos projetos do add-in (dotnet build -p:RevitVersion=2025). Cada versão tem a sua pasta de
+    obj/bin e o seu arquivo de travamento de pacotes; as bibliotecas netstandard2.0 são as mesmas para todas.
+  -->
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'BIMinFormation.Revit' or '$(MSBuildProjectName)' == 'BIMinFormation.Revit.Harness'">
+    <RevitVersion Condition="'$(RevitVersion)' == ''">2023</RevitVersion>
+    <BaseIntermediateOutputPath>obj\R$(RevitVersion)\</BaseIntermediateOutputPath>
+    <BaseOutputPath>bin\R$(RevitVersion)\</BaseOutputPath>
+    <NuGetLockFilePath>packages.R$(RevitVersion).lock.json</NuGetLockFilePath>
+    <!-- as pastas obj/bin das outras versões ficam dentro do projeto: fora da busca de código -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);obj/**;bin/**</DefaultItemExcludes>
+  </PropertyGroup>
+</Project>

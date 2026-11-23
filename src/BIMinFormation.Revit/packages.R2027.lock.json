@@ -1,0 +1,42 @@
+{
+  "version": 2,
+  "dependencies": {
+    "net10.0-windows7.0": {
+      "Nice3point.Revit.Api.RevitAPI": {
+        "type": "Direct",
+        "requested": "[2027.4.0, )",
+        "resolved": "2027.4.0",
+        "contentHash": "6EeztMmp8HUxfRc4W+vlDI/Rcj/hjo5fObmtKNHZyEFQR4X3zqa9xZLezvtHELYzSxsWRReoVFvGUzaUFqa+xg=="
+      },
+      "Nice3point.Revit.Api.RevitAPIUI": {
+        "type": "Direct",
+        "requested": "[2027.4.0, )",
+        "resolved": "2027.4.0",
+        "contentHash": "kes34ovi7HVn4G0VM6jYF8NdJvJjC8GKYBxdGjLJl+dVM89Lqza10QVQWjoZ51bEuRnd7pka25vNtM0yEougfg=="
+      },
+      "biminformation.core": {
+        "type": "Project",
+        "dependencies": {
+          "BIMinFormation.Exporter": "[0.1.0, )",
+          "BIMinFormation.Ids": "[0.1.0, )",
+          "BIMinFormation.Rules": "[0.1.0, )"
+        }
+      },
+      "biminformation.exporter": {
+        "type": "Project",
+        "dependencies": {
+          "BIMinFormation.Ids": "[0.1.0, )"
+        }
+      },
+      "biminformation.ids": {
+        "type": "Project"
+      },
+      "biminformation.rules": {
+        "type": "Project",
+        "dependencies": {
+          "BIMinFormation.Ids": "[0.1.0, )"
+        }
+      }
+    }
+  }
+}
