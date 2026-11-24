@@ -1,51 +1,52 @@
 # BIMinFormation
 
-Plugin do Revit que ajuda a preencher o modelo, desde a modelagem, com o que os arquivos `.ids`
-([buildingSMART IDS 1.0](https://github.com/buildingSMART/IDS)) exigem do IFC.
+**English** | [Português](README.pt-BR.md)
 
-*Revit add-in that helps fill the model, while modeling, with what buildingSMART IDS 1.0 files require from the IFC.
-The interface is available in Brazilian Portuguese and English.*
+Revit add-in that helps fill the model, while modeling, with what `.ids` files
+([buildingSMART IDS 1.0](https://github.com/buildingSMART/IDS)) require from the IFC. The interface is available in
+English and Brazilian Portuguese.
 
-## O que faz
+## What it does
 
-- **Configurações**: escolhe a pasta e os arquivos `.ids` do projeto e mostra o que foi encontrado (fichas, esquema IFC,
-  defeitos do arquivo).
-- **Classificação**: indica, para cada elemento, a ficha do `.ids` que vale para ele (entidade IFC, tipo predefinido,
-  identificação).
-- **Preencher Parâmetros**: mostra o que cada ficha exige do elemento e grava os valores nos parâmetros do Revit,
-  inclusive do edifício, do terreno e do projeto (Informações do projeto).
-- **Pré-validação**: confere as fichas no modelo antes de exportar (passa, falha, a conferir) e, com **Conferir no IFC**,
-  exporta um IFC temporário e avalia as fichas nele. Gera pendências em CSV, BCF e relatório.
-- **Exportar IFC**: abre a exportação IFC do Revit com a configuração que as fichas pedem (versão IFC, quantidades,
-  conjuntos de propriedades).
+- **Settings**: picks the project's `.ids` folder and files and shows what was found (specifications, IFC schema,
+  defects in the files).
+- **Classification**: sets, for each element, the `.ids` specification that applies to it (IFC entity, predefined type,
+  identification).
+- **Fill In Parameters**: shows what each specification requires from the element and writes the values to Revit
+  parameters, including the building, site and project (Project Information).
+- **Pre-validation**: checks the specifications on the model before exporting (pass, fail, to check) and, with
+  **Check in the IFC**, exports a temporary IFC and evaluates the specifications on it. Writes pending items as CSV, BCF
+  and a report.
+- **Export IFC**: opens the Revit IFC export with the configuration the specifications require (IFC version, quantities,
+  property sets).
 
-O plugin só lê os `.ids`; nunca os altera.
+The add-in only reads the `.ids` files; it never changes them.
 
-## Versões
+## Versions
 
-- Revit 2023.1, 2025, 2026 e 2027.
-- IFC2X3, IFC4 e IFC4X3_ADD2. O IFC 4.3 com quantidades sai do Revit 2026 em diante (Vista de Transferência de Projeto).
+- Revit 2023.1, 2025, 2026 and 2027.
+- IFC2X3, IFC4 and IFC4X3_ADD2. IFC 4.3 with quantities requires Revit 2026 or newer (IFC4x3 Design Transfer View).
 
-## Instalar
+## Install
 
-Baixe o instalador `BIMinFormation-<versão>-setup.exe` na página de [versões](https://github.com/dglsdws/BIMinFormation/releases)
-e execute-o com o Revit fechado. Ele instala para o seu usuário (sem administrador) e pergunta para quais versões do
-Revit; desinstala em Configurações > Aplicativos. Na primeira vez que o Revit abrir, escolha "Sempre carregar" na
-pergunta sobre o add-in não assinado. Também há um `.zip` para instalar copiando uma pasta (instruções dentro dele).
+Download `BIMinFormation-<version>-setup.exe` from the [releases](https://github.com/dglsdws/BIMinFormation/releases)
+page and run it with Revit closed. It installs for your user (no administrator rights) and asks for which Revit versions;
+uninstall it from Settings > Apps. The first time Revit starts, choose "Always Load" when it asks about the unsigned
+add-in. There is also a `.zip` to install by copying a folder (instructions inside).
 
-## Compilar a partir do código
+## Build from source
 
-1. Instale o [SDK .NET 10](https://dotnet.microsoft.com/download) (Windows).
-2. Compile para o ano do Revit (`2023`, `2025`, `2026` ou `2027`):
+1. Install the [.NET 10 SDK](https://dotnet.microsoft.com/download) (Windows).
+2. Build for the Revit year (`2023`, `2025`, `2026` or `2027`):
 
    ```powershell
    dotnet build src\BIMinFormation.Revit\BIMinFormation.Revit.csproj -c Release -p:RevitVersion=2027
    ```
 
-3. Com o Revit fechado, copie de `src\BIMinFormation.Revit\bin\R2027\Release\<framework>\` (`net48` no 2023,
-   `net8.0-windows` no 2025 e 2026, `net10.0-windows` no 2027) para `%AppData%\Autodesk\Revit\Addins\2027\`:
-   o `BIMinFormation.addin` na pasta do ano e as `.dll` numa subpasta `BIMinFormation\`.
+3. With Revit closed, copy from `src\BIMinFormation.Revit\bin\R2027\Release\<framework>\` (`net48` for 2023,
+   `net8.0-windows` for 2025 and 2026, `net10.0-windows` for 2027) to `%AppData%\Autodesk\Revit\Addins\2027\`:
+   `BIMinFormation.addin` into the year folder and the `.dll` files into a `BIMinFormation\` subfolder.
 
-## Licença
+## License
 
-MIT, © 2026 Douglas W. Santos. Veja [LICENSE](LICENSE).
+MIT, © 2026 Douglas W. Santos. See [LICENSE](LICENSE).
