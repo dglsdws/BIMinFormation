@@ -43,13 +43,19 @@ namespace BIMinFormation.Revit.UI
             foreach (var candidate in candidates)
             {
                 bool suggested = !candidate.InMapping && candidate.WithValue == 0;
-                int index = _grid.Rows.Add(suggested, candidate.Name, candidate.InMapping ? Tr.T("no mapeamento atual") : Tr.T("fora do mapeamento"),
+                // which specification keeps it: deleting an element does not free a parameter another element still uses
+                string mapping = candidate.InMapping
+                    ? Tr.T("em uso: ") + string.Join(", ", candidate.UsedBy.Take(2)) + (candidate.UsedBy.Count > 2 ? " +" + (candidate.UsedBy.Count - 2) : "")
+                    : Tr.T("fora do mapeamento");
+                int index = _grid.Rows.Add(suggested, candidate.Name, mapping,
                     candidate.WithValue == 0 ? Tr.T("nenhum") : candidate.WithValue + Tr.T(" elemento(s)"));
                 var row = _grid.Rows[index];
                 row.Tag = candidate;
                 if (candidate.InMapping)
                 {
                     row.Cells[CheckColumn].ReadOnly = true;
+                    row.Cells[2].ToolTipText = Tr.T("Fichas aplicadas a algum elemento do modelo que usam este parâmetro:") + Environment.NewLine
+                                               + string.Join(Environment.NewLine, candidate.UsedBy);
                     row.DefaultCellStyle.ForeColor = UiKit.Muted;
                 }
                 else if (candidate.WithValue > 0)

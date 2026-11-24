@@ -154,7 +154,8 @@ namespace BIMinFormation.Core.Prevalidation
                 {
                     var result = SpecificationEvaluator.EvaluateElement(specification, element, model);
                     bySpecification[specification].Add(new ElementCheck(element, specification.Requirements.Facets
-                        .Select(f => Check(f, result.Failures.FirstOrDefault(x => ReferenceEquals(x.Facet, f))?.Result, schema, exporter))
+                        .Select(f => ZeroInPositive(f, element, schema)
+                                     ?? Check(f, result.Failures.FirstOrDefault(x => ReferenceEquals(x.Facet, f))?.Result, schema, exporter))
                         .ToList()));
                 }
             }
@@ -168,6 +169,24 @@ namespace BIMinFormation.Core.Prevalidation
             return new PrevalidationResult(checks, orphans, model);
         }
 
+        /// <summary>
+        /// Zero (or less) in a positive measure (IDS dataType or standard Pset template): the schema requires more than zero
+        /// and the Revit exporter does not write the property, so it fails in the IFC even when the model meets the IDS.
+        /// </summary>
+        private static RequirementCheck? ZeroInPositive(Facet facet, ElementState element, IfcSchemaCatalog schema)
+        {
+            if (!(facet is PropertyFacet property) || !(property.PropertySet is SimpleValue set) || !(property.BaseName is SimpleValue name))
+                return null;
+            if (!IfcDataTypes.IsPositiveMeasure(property.DataType)
+                && !IfcDataTypes.IsPositiveMeasure(schema.PropertySet(set.Text)?.Property(name.Text)?.DataType))
+                return null;
+            var value = element.PropertySets.FirstOrDefault(p => p.Name == set.Text)?.Properties.FirstOrDefault(p => p.Name == name.Text)
+                ?.Values.FirstOrDefault(v => v.Kind == ValueKind.Real || v.Kind == ValueKind.Integer);
+            return value != null && value.Number <= 0
+                ? new RequirementCheck(facet, CheckStatus.Fail, Label(facet), Tr.T("valor ") + value + Tr.T(": medida positiva, o exportador não escreve zero"))
+                : null;
+        }
+
         /// <summary>Status of a requirement from the engine result (<c>null</c> = met in the model).</summary>
         public static RequirementCheck Check(Facet facet, FacetResult? failure, IfcSchemaCatalog schema, ExporterCatalog exporter)
         {
@@ -175,6 +194,9 @@ namespace BIMinFormation.Core.Prevalidation
             string label = Label(facet);
             if (origin.Origin == ValueOrigin.ExporterQuantity)
             {
+                // given in the Qto parameter: the exporter writes that value (it reads the parameter before calculating)
+                if (failure == null) return new RequirementCheck(facet, CheckStatus.Pass, label, null);
+
                 return new RequirementCheck(facet, CheckStatus.Unknown, label, Tr.T("calculado pelo exportador"), byExporter: true);
             }
 

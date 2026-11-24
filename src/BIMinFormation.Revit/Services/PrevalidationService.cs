@@ -58,7 +58,42 @@ namespace BIMinFormation.Revit.Services
         public static PrevalidationResult Run(Document document, PluginContext context)
         {
             var model = Adapter.ModelCache.Read(document, context);
-            return Prevalidator.Run(context.Library.Specifications, model, context.SchemaCatalog, context.Exporter);
+            return ExplainConflicts(Prevalidator.Run(context.Library.Specifications, model, context.SchemaCatalog, context.Exporter), context);
+        }
+
+        /// <summary>
+        /// A user property the exporter writes with another type for the entity (two specifications ask for the same property
+        /// with different types, e.g. BIMPR.Espessura as length in CONTRAPISO and as text in TELHA, both IfcCovering): the
+        /// requirement cannot pass in the IFC. The reason says so instead of "property missing".
+        /// </summary>
+        private static PrevalidationResult ExplainConflicts(PrevalidationResult result, PluginContext context)
+        {
+            string? Conflict(Rules.ElementState element, Facet facet)
+            {
+                if (!(facet is PropertyFacet property) || !(property.PropertySet is SimpleValue set) || !(property.BaseName is SimpleValue name))
+                    return null;
+                var origin = Exporter.ValueOrigins.Classify(facet, context.SchemaCatalog, context.Exporter);
+                string? type = origin.DataType?.PropertyType;
+                if (origin.Origin != Exporter.ValueOrigin.CustomParameter || type == null) return null;
+                if (context.Mapping.Find(element.Entity, set.Text, name.Text, type) != null) return null;
+                var other = context.Mapping.Find(element.Entity, set.Text, name.Text);
+                return other == null
+                    ? null
+                    : Tr.T("conflito entre fichas: o exportador escreve ") + set.Text + "." + name.Text + Tr.T(" como ") + other.PropertyType
+                      + Tr.T(" para ") + element.Entity + " (" + other.Specification + Tr.T("), e esta ficha pede ") + type;
+            }
+
+            var checks = result.Specifications.Select(s => new SpecificationCheck(s.Specification, s.Elements.Select(e =>
+            {
+                var requirements = e.Requirements.Select(r =>
+                {
+                    if (r.Status == CheckStatus.Pass) return r;
+                    string? conflict = Conflict(e.Element, r.Facet);
+                    return conflict == null ? r : new RequirementCheck(r.Facet, CheckStatus.Fail, r.Label, conflict);
+                }).ToList();
+                return new ElementCheck(e.Element, requirements, e.FromIfc);
+            }).ToList())).ToList();
+            return new PrevalidationResult(checks, result.Orphans, result.Model, result.Probe);
         }
 
         /// <summary>

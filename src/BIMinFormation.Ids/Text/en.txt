@@ -21,6 +21,7 @@ não atende à ficha	does not meet the specification
 o exportador não escreve este valor como o IDS pede	the exporter does not write this value as the IDS requires
 o exportador só escreve um destes valores: 	the exporter only writes one of these values: 
 obrigatório	required
+precisa ser maior que zero (medida positiva: o exportador não escreve zero)	must be greater than zero (positive measure: the exporter does not write zero)
 texto	text
 true ou false	true or false
 um número (use ponto decimal)	a number (use a decimal point)
@@ -164,6 +165,7 @@ tipo predefinido	predefined type
  (instrução: 	 (instruction: 
 (restrição)	(restriction)
 (sem nome)	(no name)
+: medida positiva, o exportador não escreve zero	: positive measure, the exporter does not write zero
 a ficha proíbe e o elemento tem	the specification prohibits it and the element has it
 atributo 	attribute 
 atributo ausente	attribute missing
@@ -189,6 +191,7 @@ sem material	no material
 sistema fora do pedido	system outside what is required
 tipo de dado diferente	different data type
 tipo predefinido diferente	different predefined type
+valor 	value 
 valor fora do pedido	value outside what is required
 vazio no modelo; o exportador pode calcular	empty in the model; the exporter may calculate it
 
@@ -489,6 +492,7 @@ Defina o esquema IFC alvo em Configurações (os .ids misturam versões).	Set th
 
 # src/BIMinFormation.Revit/Services/PrevalidationService.cs
  quantidade(s) calculada(s) pelo exportador	 quantity(ies) calculated by the exporter
+conflito entre fichas: o exportador escreve 	conflict between specifications: the exporter writes 
 falha no IFC	fails in the IFC
 passa no IFC	passes in the IFC
 
@@ -531,12 +535,13 @@ Apagar remove o parâmetro e os valores dele. Os do mapeamento atual não podem 
 BIMinFormation — Limpar parâmetros do plugin	BIMinFormation — Clean up plugin parameters
 COM VALOR	WITH VALUE
 Cancelar	Cancel
+Fichas aplicadas a algum elemento do modelo que usam este parâmetro:	Specifications applied to some model element that use this parameter:
 Nenhum parâmetro do plugin no projeto.	No plugin parameter in the project.
 PARÂMETRO	PARAMETER
 SITUAÇÃO	STATUS
+em uso: 	in use: 
 fora do mapeamento	outside the mapping
 nenhum	none
-no mapeamento atual	in the current mapping
 
 # src/BIMinFormation.Revit/UI/ConformityPane.cs
  de 	 of 
@@ -596,7 +601,7 @@ vincular ao Revit	link to Revit
  (desmarcado: para todas as entidades com esta propriedade)	 (unchecked: for all entities with this property)
  parâmetro(s) compatível(is)	 compatible parameter(s)
 BIMinFormation — Vincular ao Revit	BIMinFormation — Link to Revit
-Material do elemento (calculado pelo plugin)	Element material (calculated by the plugin)
+Material do elemento (todos ou um deles, escolhido no Preencher)	Element material (all or one of them, chosen in Fill In Parameters)
 O exportador lê o parâmetro vinculado na hora de exportar: o valor fica sempre atual e o plugin não cria parâmetro novo.	The exporter reads the linked parameter at export time: the value is always current and the plugin does not create a new parameter.
 Onde	Where
 Parâmetro do Revit	Revit parameter
@@ -680,6 +685,7 @@ Arquivos ativos:	Active files:
 Automático (dos .ids)	Automatic (from the .ids files)
 Automático (idioma do Revit)	Automatic (Revit language)
 BIMinFormation — Configurações	BIMinFormation — Settings
+Desmarcar todos	Uncheck all
 Esconder no Preencher as exigências sem valor a preencher	Hide in Fill In Parameters the requirements with no value to fill in
 Esquema IFC alvo:	Target IFC schema:
 Exportar perfil...	Export profile...
@@ -690,6 +696,7 @@ Importar perfil...	Import profile...
 Limpar parâmetros...	Clean up parameters...
 Mapear todas as fichas da pasta (por padrão, só as fichas em uso no modelo)	Map all specifications in the folder (by default, only those in use in the model)
 Marcar todos	Check all
+Marque pelo menos um arquivo .ids.	Check at least one .ids file.
 O .rvt não é salvo: o perfil entra no modelo e você salva quando quiser.	The .rvt is not saved: the profile goes into the model and you save it when you want.
 Parâmetros compartilhados (*.txt)|*.txt	Shared parameters (*.txt)|*.txt
 Parâmetros:	Parameters:
@@ -701,7 +708,6 @@ Salvar no projeto	Save to project
 Salvar...	Save...
 Selecionar...	Select...
 Situação:	Status:
-do plugin	of the plugin
 
 # src/BIMinFormation.Revit/UI/SpecPickerForm.cs
  linhas selecionadas	 selected rows

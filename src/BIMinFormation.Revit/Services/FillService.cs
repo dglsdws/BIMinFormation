@@ -43,6 +43,9 @@ namespace BIMinFormation.Revit.Services
 
         public string? Conflict { get; set; }
 
+        /// <summary>The value must be greater than zero: positive measure in the IDS or in the standard Pset template.</summary>
+        public bool Positive { get; set; }
+
         /// <summary>Profile link for the property on this entity.</summary>
         public BIMinFormation.Core.Profile.ParameterMapping? Link { get; set; }
 
@@ -54,17 +57,17 @@ namespace BIMinFormation.Revit.Services
 
         public bool IsWritable => Conflict == null && Parameter != null && !Linked
             && (Origin.Origin == ValueOrigin.CustomParameter || Origin.Origin == ValueOrigin.StandardParameter
-                || Origin.Origin == ValueOrigin.AttributeOverride);
+                || Origin.Origin == ValueOrigin.AttributeOverride || Origin.Origin == ValueOrigin.ExporterQuantity);
 
         public CellResult Evaluate()
         {
             var result = Conflict != null
                 ? new CellResult(CellStatus.Invalid, Tr.T("conflito entre fichas: ") + Conflict)
                 : Linked
-                    ? FillCell.Evaluate(Requirement, Origin.Origin, ModelValue, null, DataType, Choices)
+                    ? FillCell.Evaluate(Requirement, Origin.Origin, ModelValue, null, DataType, Choices, Positive)
                 : !IsWritable && Origin.Origin != ValueOrigin.ExporterQuantity && Origin.Origin != ValueOrigin.NotExportable
                     ? new CellResult(CellStatus.Manual, Origin.Detail)
-                    : FillCell.Evaluate(Requirement, Origin.Origin, ModelValue, Typed, DataType, Choices);
+                    : FillCell.Evaluate(Requirement, Origin.Origin, ModelValue, Typed, DataType, Choices, Positive);
 
             // number in the IDS (e.g. IFCCOUNTMEASURE) written to an integer Revit parameter (Pset_DoorWindowGlazingType.GlassLayers):
             // only integers are written
@@ -87,6 +90,9 @@ namespace BIMinFormation.Revit.Services
         /// the schema enumeration, the only ones the exporter writes (filtered by the IDS ones, if any).
         /// </summary>
         public IReadOnlyList<string>? Choices { get; set; }
+
+        /// <summary>Material link: all the materials of the element (first) and each one of them, for the user to pick.</summary>
+        public IReadOnlyList<string>? MaterialOptions { get; set; }
 
         /// <summary>
         /// IFC type of the value: the IDS one or, when the IDS does not say, the one of the standard parameter installed by
@@ -165,8 +171,8 @@ namespace BIMinFormation.Revit.Services
 
         public bool IsBoolean => IfcDataTypes.Classify(DataType) == IfcValueKind.Boolean;
 
-        /// <summary>The value to show in the VALUE column.</summary>
-        public string ValueText => Typed ?? (ModelValue == null || ModelValue.IsEmpty ? "" : ModelValue.ToString());
+        /// <summary>Typed value, or the model value; a cell linked to Revit always shows the linked value.</summary>
+        public string ValueText => (Linked ? null : Typed) ?? (ModelValue == null || ModelValue.IsEmpty ? "" : ModelValue.ToString());
 
         public bool ToWrite()
         {
@@ -302,6 +308,8 @@ namespace BIMinFormation.Revit.Services
                     cell.ModelValue = state.PropertySets.FirstOrDefault(p => p.Name == requirement.PropertySet)
                         ?.Properties.FirstOrDefault(p => p.Name == requirement.Name)?.Values.FirstOrDefault(v => !v.IsEmpty);
                     cell.OnType = context.Profile.IsTypeProperty(requirement.PropertySet!, requirement.Name!);
+                    cell.Positive = IfcDataTypes.IsPositiveMeasure(requirement.DataType)
+                                    || IfcDataTypes.IsPositiveMeasure(context.SchemaCatalog.PropertySet(requirement.PropertySet!)?.Property(requirement.Name!)?.DataType);
                     if (origin.Origin == ValueOrigin.CustomParameter && origin.DataType?.PropertyType != null)
                     {
                         // the parameter the PropertySets file names for the entity of this element
@@ -320,8 +328,9 @@ namespace BIMinFormation.Revit.Services
                                          ?? context.Mapping.NameFor(requirement.PropertySet!, requirement.Name!, origin.DataType.PropertyType,
                                              cell.OnType ? ParameterScope.Type : ParameterScope.Instance);
                     }
-                    else if (origin.Origin == ValueOrigin.StandardParameter && origin.Parameter != null)
+                    else if ((origin.Origin == ValueOrigin.StandardParameter || origin.Origin == ValueOrigin.ExporterQuantity) && origin.Parameter != null)
                     {
+                        // a Qto with an installed parameter: empty, the exporter calculates; with a value, the exporter writes it
                         cell.Parameter = requirement.PropertySet + "." + requirement.Name + (cell.OnType ? "[Type]" : "");
                     }
                 }
@@ -332,14 +341,21 @@ namespace BIMinFormation.Revit.Services
                     cell.Parameter = overrideName;
                 }
 
-                // material calculated by the plugin (derived link): proposed as "automatic" when it differs from the written one
+                // material calculated by the plugin (derived link): the user picks all the materials of the element or one of
+                // them; the choice stays while it is a material of the element, otherwise "all" is proposed as "automatic"
                 if (cell.Derived && cell.IsWritable)
                 {
-                    string? material = RevitLinks.MaterialNames(element, element.Document.GetElement(element.GetTypeId()) as ElementType);
-                    if (material != null && (cell.ModelValue == null || cell.ModelValue.IsEmpty || cell.ModelValue.ToString() != material))
+                    var names = RevitLinks.Materials(element, element.Document.GetElement(element.GetTypeId()) as ElementType);
+                    if (names.Count > 0)
                     {
-                        cell.Typed = material;
-                        cell.FromIds = true;
+                        string all = string.Join(" / ", names);
+                        cell.MaterialOptions = names.Count > 1 ? new[] { all }.Concat(names).ToList() : names;
+                        string? current = cell.ModelValue == null || cell.ModelValue.IsEmpty ? null : cell.ModelValue.ToString();
+                        if (current == null || !cell.MaterialOptions.Contains(current))
+                        {
+                            cell.Typed = all;
+                            cell.FromIds = true;
+                        }
                     }
                 }
 
@@ -499,6 +515,7 @@ namespace BIMinFormation.Revit.Services
                     return ParameterRequest.For(requirement.PropertySet!, requirement.Name!, cell.Origin.DataType!, cell.OnType, spec,
                         name: cell.Parameter);
                 case ValueOrigin.StandardParameter:
+                case ValueOrigin.ExporterQuantity:
                     return PluginContext.Installed.Request(cell.Parameter!)
                            ?? throw new InvalidOperationException(Tr.T("parâmetro padrão não instalado: ") + cell.Parameter);
                 case ValueOrigin.AttributeOverride:

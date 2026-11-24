@@ -250,10 +250,11 @@ namespace BIMinFormation.Revit.UI
         private void SetRows(List<FillElementRow> rows)
         {
             var selected = new HashSet<long>(SelectedRows().Select(r => r.Id.IdValue()));
-            // edits not written yet survive the refresh
+            // edits not written yet survive the refresh, except where the cell is now linked to Revit or to the calculated material (the linked value
+            // shows); project, building and site rows share the Project Information element, so the same key may repeat
             var edits = _rows.SelectMany(r => r.Cells).Where(c => c.Typed != null && !c.FromIds)
-                .ToDictionary(c => c.ElementId.IdValue() + "|" + c.Key, c => c.Typed);
-            foreach (var cell in rows.SelectMany(r => r.Cells))
+                .GroupBy(c => c.ElementId.IdValue() + "|" + c.Key).ToDictionary(g => g.Key, g => g.First().Typed);
+            foreach (var cell in rows.SelectMany(r => r.Cells).Where(c => !c.Linked && !c.Derived))
             {
                 if (edits.TryGetValue(cell.ElementId.IdValue() + "|" + cell.Key, out var typed))
                 {
@@ -376,10 +377,13 @@ namespace BIMinFormation.Revit.UI
                     var gridRow = _cells.Rows[index];
                     gridRow.Tag = group;
                     DataGridViewCell valueCell = gridRow.Cells[ValueColumn];
-                    if (first.IsWritable && (first.Choices != null || first.Requirement.AllowedValues != null || first.IsBoolean))
+                    // material link: the materials every selected element has
+                    var materials = first.MaterialOptions?.Where(m => group.All(c => c.MaterialOptions?.Contains(m) == true)).ToList();
+                    if (materials != null && materials.Count == 0) materials = null;
+                    if (first.IsWritable && (first.Choices != null || first.Requirement.AllowedValues != null || first.IsBoolean || materials != null))
                     {
                         var options = first.IsBoolean ? new List<string> { "true", "false" }
-                            : (first.Choices ?? first.Requirement.AllowedValues!).ToList();
+                            : (first.Choices ?? first.Requirement.AllowedValues ?? materials!).ToList();
                         var combo = new DataGridViewComboBoxCell { FlatStyle = FlatStyle.Flat };
                         combo.Items.Add(Empty);
                         combo.Items.AddRange(options.Cast<object>().ToArray());

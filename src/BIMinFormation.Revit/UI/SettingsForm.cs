@@ -76,18 +76,15 @@ namespace BIMinFormation.Revit.UI
             }
 
             Row(Tr.T("Pasta dos .ids:"), _folder, UiKit.Button(Tr.T("Selecionar..."), (s, e) => PickFolder()));
-            Row(Tr.T("Arquivos ativos:"), _files, UiKit.Button(Tr.T("Marcar todos"), (s, e) => CheckAll()), 0);
+            var checkButtons = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false };
+            checkButtons.Controls.Add(UiKit.Button(Tr.T("Marcar todos"), (s, e) => CheckAll(true)));
+            checkButtons.Controls.Add(UiKit.Button(Tr.T("Desmarcar todos"), (s, e) => CheckAll(false)));
+            Row(Tr.T("Arquivos ativos:"), _files, checkButtons, 0);
             Row(Tr.T("Esquema IFC alvo:"), _schema);
             Row(Tr.T("Parâmetros:"), _parameters, UiKit.Button(Tr.T("Selecionar..."), (s, e) => PickParameters()));
             Row("", _hide);
             Row("", _mapAll);
-            Row(Tr.T("Idioma:"), _language, new Label
-            {
-                Text = Tr.T("do plugin"),
-                Dock = DockStyle.Fill,
-                TextAlign = ContentAlignment.MiddleLeft,
-                ForeColor = UiKit.Muted,
-            });
+            Row(Tr.T("Idioma:"), _language);
             var propertySets = UiKit.Button(Tr.T("Salvar..."), (s, e) =>
             {
                 PropertySetsFileRequested = true;
@@ -170,9 +167,9 @@ namespace BIMinFormation.Revit.UI
             Evaluate();
         }
 
-        private void CheckAll()
+        private void CheckAll(bool value)
         {
-            for (int i = 0; i < _files.Items.Count; i++) _files.SetItemChecked(i, true);
+            for (int i = 0; i < _files.Items.Count; i++) _files.SetItemChecked(i, value);
         }
 
         /// <summary>Copies the screen to the profile (all checked = empty list = every file in the folder).</summary>
@@ -267,6 +264,13 @@ namespace BIMinFormation.Revit.UI
 
         private void Save()
         {
+            // nothing checked would be saved as an empty list, which means "every file in the folder"
+            if (_files.Items.Count > 0 && _files.CheckedItems.Count == 0)
+            {
+                MessageBox.Show(this, Tr.T("Marque pelo menos um arquivo .ids."), Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             Profile = Collect();
             DialogResult = DialogResult.OK;
             Close();

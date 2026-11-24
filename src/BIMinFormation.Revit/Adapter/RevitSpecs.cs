@@ -59,12 +59,22 @@ namespace BIMinFormation.Revit.Adapter
         public static ForgeTypeId? SiUnit(ForgeTypeId spec) =>
             SiUnits.TryGetValue(spec.TypeId, out var unit) ? unit : null;
 
-        /// <summary>Revit internal value → SI (or the value itself, when the spec has no unit).</summary>
+        /// <summary>
+        /// Revit internal value → SI (or the value itself, when the spec has no unit), rounded to 12 significant digits: the
+        /// round trip through feet leaves noise in the last digits (0.1 m came back as 0.100000000000002), far below the IDS
+        /// tolerance (1e-6 relative).
+        /// </summary>
         public static double ToSi(double internalValue, ForgeTypeId spec)
         {
             var unit = SiUnit(spec);
-            return unit == null ? internalValue : UnitUtils.ConvertFromInternalUnits(internalValue, unit);
+            return Clean(unit == null ? internalValue : UnitUtils.ConvertFromInternalUnits(internalValue, unit));
         }
+
+        /// <summary>Rounds to 12 significant digits (keeps 0, infinities and NaN as they are).</summary>
+        public static double Clean(double value) =>
+            value == 0 || double.IsNaN(value) || double.IsInfinity(value)
+                ? value
+                : double.Parse(value.ToString("G12", System.Globalization.CultureInfo.InvariantCulture), System.Globalization.CultureInfo.InvariantCulture);
 
         public static double FromSi(double siValue, ForgeTypeId spec)
         {

@@ -76,7 +76,7 @@ namespace BIMinFormation.Revit.UI
 
             if (materialPreview != null)
             {
-                var item = new ListViewItem(new[] { Tr.T("Material do elemento (calculado pelo plugin)"), materialPreview, Tr.T("camadas"), "" })
+                var item = new ListViewItem(new[] { Tr.T("Material do elemento (todos ou um deles, escolhido no Preencher)"), materialPreview, Tr.T("camadas"), "" })
                 {
                     Tag = ParameterMapping.DerivedMaterial,
                 };

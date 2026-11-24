@@ -190,6 +190,13 @@ namespace BIMinFormation.Revit.Adapter
         /// </summary>
         public static string? MaterialNames(Element element, ElementType? type)
         {
+            var names = Materials(element, type);
+            return names.Count == 0 ? null : string.Join(" / ", names);
+        }
+
+        /// <summary>Material names of the element, each once: the layers of the type, or the element and structural materials.</summary>
+        public static List<string> Materials(Element element, ElementType? type)
+        {
             var document = element.Document;
             var ids = new List<ElementId>();
             if (type is HostObjAttributes host && host.GetCompoundStructure() is CompoundStructure structure)
@@ -205,12 +212,12 @@ namespace BIMinFormation.Revit.Adapter
                 if (structural != null) ids.Add(structural);
             }
 
-            var names = ids.Where(id => id != ElementId.InvalidElementId)
+            return ids.Where(id => id != ElementId.InvalidElementId)
                 .Select(id => document.GetElement(id)?.Name)
                 .Where(n => !string.IsNullOrWhiteSpace(n))
+                .Select(n => n!)
                 .Distinct()
                 .ToList();
-            return names.Count == 0 ? null : string.Join(" / ", names);
         }
     }
 }

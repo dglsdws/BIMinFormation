@@ -18,7 +18,10 @@ namespace BIMinFormation.Revit.Services
         public string Name { get; set; } = "";
 
         /// <summary>The current mapping (specifications in use) uses the parameter.</summary>
-        public bool InMapping { get; set; }
+        public bool InMapping => UsedBy.Count > 0;
+
+        /// <summary>Specifications in use (applied to some element) that keep the parameter in the mapping.</summary>
+        public IReadOnlyList<string> UsedBy { get; set; } = Array.Empty<string>();
 
         /// <summary>Elements and types with a value in the parameter.</summary>
         public int WithValue { get; set; }
@@ -49,8 +52,9 @@ namespace BIMinFormation.Revit.Services
                 }
             }
 
-            var mapped = new HashSet<Guid>(context.Mapping.Entities.SelectMany(context.Mapping.For)
-                .Where(p => p.ParameterGuid != null).Select(p => p.ParameterGuid!.Value));
+            var mapped = context.Mapping.Entities.SelectMany(context.Mapping.For).Where(p => p.ParameterGuid != null)
+                .GroupBy(p => p.ParameterGuid!.Value)
+                .ToDictionary(g => g.Key, g => (IReadOnlyList<string>)g.Select(p => p.Specification).Distinct().OrderBy(s => s).ToList());
             var result = new List<CleanupCandidate>();
             foreach (var shared in new FilteredElementCollector(document).OfClass(typeof(SharedParameterElement)).Cast<SharedParameterElement>())
             {
@@ -63,7 +67,7 @@ namespace BIMinFormation.Revit.Services
                     Id = shared.Id,
                     Guid = shared.GuidValue,
                     Name = shared.Name,
-                    InMapping = mapped.Contains(shared.GuidValue),
+                    UsedBy = mapped.TryGetValue(shared.GuidValue, out var usedBy) ? usedBy : Array.Empty<string>(),
                     WithValue = withValue,
                 });
             }

@@ -92,7 +92,7 @@ namespace BIMinFormation.Revit.Commands
                 }
 
                 var context = Commanding.Context(commandData.Application);
-                if (context == null) return Result.Cancelled;
+                if (context == null) return Result.Succeeded; // not Cancelled: Revit would roll back what Settings did meanwhile
                 var rows = ClassificationService.BuildRows(commandData.Application.ActiveUIDocument.Document, context);
                 new ClassificationForm(commandData.Application, commandData.Application.ActiveUIDocument.Document, Commanding.Queue, context, rows).ShowNonModal();
                 return Result.Succeeded;
@@ -120,7 +120,7 @@ namespace BIMinFormation.Revit.Commands
                 }
 
                 var context = Commanding.Context(commandData.Application);
-                if (context == null) return Result.Cancelled;
+                if (context == null) return Result.Succeeded; // not Cancelled: Revit would roll back what Settings did meanwhile
                 var rows = FillService.BuildRows(commandData.Application.ActiveUIDocument.Document, context);
                 new FillForm(commandData.Application, commandData.Application.ActiveUIDocument.Document, Commanding.Queue, context, rows).ShowNonModal();
                 return Result.Succeeded;
@@ -150,7 +150,7 @@ namespace BIMinFormation.Revit.Commands
                 }
 
                 var context = Commanding.Context(commandData.Application);
-                if (context == null) return Result.Cancelled;
+                if (context == null) return Result.Succeeded; // not Cancelled: Revit would roll back what Settings did meanwhile
                 var document = commandData.Application.ActiveUIDocument.Document;
                 var result = PrevalidationService.Run(document, context);
                 new PrevalidationForm(commandData.Application, document, Commanding.Queue, context, result).ShowNonModal();
@@ -177,14 +177,14 @@ namespace BIMinFormation.Revit.Commands
             try
             {
                 var context = Commanding.Context(commandData.Application);
-                if (context == null) return Result.Cancelled;
+                if (context == null) return Result.Succeeded; // not Cancelled: Revit would roll back what Settings did meanwhile
 
                 var document = commandData.Application.ActiveUIDocument.Document;
                 var setup = ExportService.Prepare(document, context);
                 if (!setup.CanExport)
                 {
                     Dialogs.Show(Dialogs.Title, Tr.T("Este Revit não exporta o que as fichas pedem"), string.Join("\n", setup.Problems));
-                    return Result.Cancelled;
+                    return Result.Succeeded; // not Cancelled: the preparation already wrote to the document
                 }
 
                 if (setup.MappingWarnings.Count > 0)
@@ -302,7 +302,10 @@ namespace BIMinFormation.Revit.Commands
                     return Result.Cancelled;
                 }
 
-                return Edit(commandData.Application) ? Result.Succeeded : Result.Cancelled;
+                Edit(commandData.Application);
+                // always Succeeded: with Cancelled, Revit rolls back every transaction of the command, including the parameter
+                // cleanup started from the window (the user saw "2 deleted" and the parameters were still there)
+                return Result.Succeeded;
             }
             catch (Exception ex)
             {

@@ -62,14 +62,19 @@ namespace BIMinFormation.Core.Fill
         /// Pset_*.* parameters installed by Autodesk, such as IFCBOOLEAN in Pset_WallCommon.LoadBearing).</param>
         /// <param name="choices">Values the exporter writes (enumerated standard property, e.g. Status = NEW, EXISTING...):
         /// outside them the exporter drops the property.</param>
+        /// <param name="positive">The value must be greater than zero (positive measure in the IDS or in the standard Pset).</param>
         public static CellResult Evaluate(PlannedRequirement requirement, ValueOrigin origin, StateValue? modelValue,
-            string? typedText, string? valueType = null, IReadOnlyList<string>? choices = null)
+            string? typedText, string? valueType = null, IReadOnlyList<string>? choices = null, bool positive = false)
         {
             string? dataType = requirement.DataType ?? valueType;
             switch (origin)
             {
                 case ValueOrigin.ExporterQuantity:
-                    return new CellResult(CellStatus.Automatic, Tr.T("calculado pelo exportador"));
+                    // the exporter reads the Qto parameter when it has a value (checked in Revit 2027: Qto_CoveringBaseQuantities.Width
+                    // of a roof, which it does not calculate); empty = calculated by the exporter
+                    bool given = typedText == null ? modelValue != null && !modelValue.IsEmpty : typedText.Length > 0 && typedText != Mixed;
+                    if (!given) return new CellResult(CellStatus.Automatic, Tr.T("calculado pelo exportador"));
+                    break;
                 case ValueOrigin.Modeling:
                     return new CellResult(CellStatus.Manual, Tr.T("conferir na modelagem"));
                 case ValueOrigin.NotExportable:
@@ -99,6 +104,12 @@ namespace BIMinFormation.Core.Fill
             if (typed && !TypeMatches(dataType, value!))
             {
                 return new CellResult(CellStatus.Invalid, Tr.T("valor não é ") + Describe(dataType));
+            }
+
+            if ((positive || IfcDataTypes.IsPositiveMeasure(dataType))
+                && (value!.Kind == ValueKind.Real || value.Kind == ValueKind.Integer) && value.Number <= 0)
+            {
+                return new CellResult(CellStatus.Invalid, Tr.T("precisa ser maior que zero (medida positiva: o exportador não escreve zero)"));
             }
 
             if (!Satisfies(requirement, value!))

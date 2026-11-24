@@ -55,6 +55,13 @@ namespace BIMinFormation.Ids
         private static readonly Regex RealLexical = new Regex(
             @"^([+-]?([0-9]+(\.[0-9]*)?|\.[0-9]+)([eE][+-]?[0-9]+)?|[+-]?INF|NaN)$", RegexOptions.CultureInvariant);
 
+        /// <summary>
+        /// Positive measure (<c>IFCPOSITIVELENGTHMEASURE</c>, <c>IFCPOSITIVEPLANEANGLEMEASURE</c>, <c>IFCPOSITIVERATIOMEASURE</c>):
+        /// the IFC schema requires a value greater than zero, and the Revit exporter drops zero (the property does not come out).
+        /// </summary>
+        public static bool IsPositiveMeasure(string? dataType) =>
+            dataType != null && dataType.StartsWith("IFCPOSITIVE", StringComparison.OrdinalIgnoreCase);
+
         public static IfcValueKind Classify(string? dataType)
         {
             if (dataType == null)
