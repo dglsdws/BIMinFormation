@@ -26,6 +26,13 @@ O plugin só lê os `.ids`; nunca os altera.
 - Revit 2023.1, 2025, 2026 e 2027.
 - IFC2X3, IFC4 e IFC4X3_ADD2. O IFC 4.3 com quantidades sai do Revit 2026 em diante (Vista de Transferência de Projeto).
 
+## Instalar
+
+Baixe o instalador `BIMinFormation-<versão>-setup.exe` na página de [versões](https://github.com/dglsdws/BIMinFormation/releases)
+e execute-o com o Revit fechado. Ele instala para o seu usuário (sem administrador) e pergunta para quais versões do
+Revit; desinstala em Configurações > Aplicativos. Na primeira vez que o Revit abrir, escolha "Sempre carregar" na
+pergunta sobre o add-in não assinado. Também há um `.zip` para instalar copiando uma pasta (instruções dentro dele).
+
 ## Compilar a partir do código
 
 1. Instale o [SDK .NET 10](https://dotnet.microsoft.com/download) (Windows).
