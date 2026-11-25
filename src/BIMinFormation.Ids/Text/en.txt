@@ -28,6 +28,11 @@ um número (use ponto decimal)	a number (use a decimal point)
 um número inteiro	an integer
 valor não é 	value is not 
 
+# src/BIMinFormation.Core/Fill/UnitInput.cs
+ (aceitas: 	 (accepted: 
+unidade não reconhecida para este tipo: 	unit not recognized for this type: 
+unidade não reconhecida: 	unit not recognized: 
+
 # src/BIMinFormation.Core/Mapping/ExportChecklist.cs
  grava IFC4X3_ADD2 com quantidades; a Vista de Referência não grava quantidades.	 writes IFC4X3_ADD2 with quantities; the Reference View does not write quantities.
  não exporta IFC 4.3 (IFC4X3_ADD2). Exporte de uma versão 	 does not export IFC 4.3 (IFC4X3_ADD2). Export from a Revit version 
@@ -63,13 +68,10 @@ mas não grava quantidades (Qto_); para entregar, exporte do Revit 2026 ou mais 
  não entra no arquivo: 	 is not included in the file: 
  pede 	 requires 
 : a ficha não define a entidade; o conjunto vai para 	: the specification does not define the entity; the property set goes to 
-: no Revit 2027 o conjunto tem um parâmetro só por 	: in Revit 2027 the property set has a single parameter per 
 : no Revit 2027 o conjunto tem um tipo só por propriedade; fica 	: in Revit 2027 the property set has a single type per property; it stays 
 : o exportador do Revit escreve um tipo só por propriedade e entidade; fica 	: the Revit exporter writes a single type per property and entity; it stays 
-; vale um vínculo geral.	; a general link applies.
 Revit 2023 a 2026 (um grupo por entidade)	Revit 2023 to 2026 (one group per entity)
 Revit 2027 (um grupo por conjunto)	Revit 2027 (one group per property set)
-propriedade, e os vínculos por entidade apontam para 	property, and the links per entity point to 
 
 # src/BIMinFormation.Core/Mapping/ExportSetup.cs
  Exporte do Revit 2026 ou mais novo.	 Export from Revit 2026 or newer.
@@ -179,6 +181,7 @@ entidade	entity
 entidade diferente	different entity
 faz parte de 	is part of 
 material fora do pedido	material outside what is required
+o exportador do Revit não calcula pesos: vincule (ex.: peso calculado) ou informe no Preencher	the Revit exporter does not calculate weights: link it (e.g. calculated weight) or enter it in Fill In Parameters
 o exportador não escreve como o .ids pede: 	the exporter does not write it as the .ids requires: 
 o exportador pode preencher (	the exporter may fill it in (
 propriedade ausente	property missing
@@ -241,6 +244,7 @@ velocidade de HVAC	HVAC velocity
  (padrão), mas o IDS pede 	 (standard), but the IDS requires 
  escrito pelo exportador	 written by the exporter
  no padrão, mas o IDS pede 	 in the standard, but the IDS requires 
+ não calcula esta quantidade nem aceita um valor informado: 	 does not calculate this quantity nor accept a given value: 
  não gera 	 does not generate 
  padrão de 	 in the standard of 
  sai como 	 is exported as 
@@ -257,11 +261,13 @@ calculada com 'Exportar quantidades base' (BaseQuantities do IFC2X3)	calculated 
 material do elemento no Revit	element material in Revit
 nome de conjunto ou propriedade por restrição: conferir à mão	property set or property name given by a restriction: check by hand
 o exportador do Revit 	the Revit exporter 
+o exportador do Revit não calcula pesos: vincule (ex.: peso calculado) ou informe	the Revit exporter does not calculate weights: link it (e.g. calculated weight) or enter it
 parâmetro 	parameter 
 parâmetro ClassificationCode ([Sistema]Código:Descrição)	ClassificationCode parameter ([System]Code:Description)
 relação do modelo (nível, montagem, grupo, hospedeiro)	model relationship (level, assembly, group, host)
 sai num conjunto do usuário com esse nome	it is exported in a user property set with that name
 sem dataType no IDS: sai como texto (Label)	no dataType in the IDS: exported as text (Label)
+só sai exportando do Revit 2027	it only gets to the IFC exporting from Revit 2027
 
 # src/BIMinFormation.Ids/IdsAuditor.cs
  (ausente)	 (missing)
@@ -361,6 +367,10 @@ Perfil do projeto do BIMinFormation (JSON).	BIMinFormation project profile (JSON
 # src/BIMinFormation.Revit/Adapter/Revit2027Export.cs
 O Revit recusou o arquivo de PropertySets: 	Revit rejected the PropertySets file: 
 
+# src/BIMinFormation.Revit/Adapter/RevitLinks.cs
+material sem densidade (Materiais → Físico): 	material without density (Materials → Physical): 
+o elemento não tem material com volume	the element has no material with volume
+
 # src/BIMinFormation.Revit/Adapter/RuntimeExporter.cs
 catálogo embutido (Revit 	embedded catalog (Revit 
 instalação (	installation (
@@ -375,7 +385,6 @@ Escolhe, para cada elemento, a ficha do .ids que vale para ele.	Chooses, for eac
 Exportar\nIFC	Export\nIFC
 Mostra o que a ficha exige e grava os valores nos parâmetros do Revit.	Shows what the specification requires and writes the values to the Revit parameters.
 Preencher\nParâmetros	Fill In\nParameters
-Protocolo	Protocol
 Pré-\nvalidação	Pre-\nvalidation
 Sobre	About
 Versão, autoria e licença do BIMinFormation.	Version, authorship and license of BIMinFormation.
@@ -429,8 +438,7 @@ Salvar o arquivo de PropertySets	Save the PropertySets file
 : elemento não existe mais	: element no longer exists
 Aplicados: 	Applied: 
 BIMinFormation: Classificação	BIMinFormation: Classification
-Edifício (Informações do projeto)	Building (Project Information)
-as Informações do projeto são o edifício (IfcBuilding); escolha uma ficha de edifício.	Project Information is the building (IfcBuilding); choose a building specification.
+BIMinFormation: Remover classificação	BIMinFormation: Remove classification
 escolha o tipo predefinido da ficha	choose the specification's predefined type
 o exportador do Revit escreve 	the Revit exporter writes 
 o exportador do Revit não escreve o tipo predefinido de 	the Revit exporter does not write the predefined type of 
@@ -471,15 +479,18 @@ Volume (m³)	Volume (m³)
 alterado	changed
 automático	automatic
 calculado	calculated
+calculado pelo exportador; na última conferência no IFC: 	calculated by the exporter; in the last IFC check: 
 conflito entre fichas: 	conflict between specifications: 
 inválido	invalid
 manual	manual
 não exportável	not exportable
 não gravável: 	not writable: 
+não saiu no IFC da última conferência: vincule ou informe	missing in the IFC of the last check: link it or enter it
 o exportador escreve 	the exporter writes 
 o parâmetro do Revit aceita só número inteiro	the Revit parameter only accepts integers
 parâmetro padrão não instalado: 	standard parameter not installed: 
 pendente	pending
+peso calculado: 	calculated weight: 
 proibido	prohibited
 vinculado	linked
 vínculo vazio	empty link
@@ -513,21 +524,28 @@ Falha em 	Failed in
 BIMinFormation: fichas em uso	BIMinFormation: specifications in use
 
 # src/BIMinFormation.Revit/UI/ClassificationForm.cs
+ elemento(s)?	 element(s)?
  · A aplicar: 	 · To apply: 
  · Com ficha: 	 · With specification: 
  · Fichas: 	 · Specifications: 
  · Selecionados: 	 · Selected: 
+Apaga a identidade (ex.: EOI), a entidade e o tipo predefinido gravados pela Classificação; 	Clears the identity (e.g. EOI), the entity and the predefined type written by the Classification; 
 Aplicar	Apply
 BIMinFormation — Classificação	BIMinFormation — Classification
 BIMinFormation — Classificação — 	BIMinFormation — Classification — 
 Classificar seleção	Classify selection
 Classificar seleção (	Classify selection (
+Classificação removida: 	Classification removed: 
 ELEMENTO	ELEMENT
 ESPECIFICAÇÃO DO IDS	IDS SPECIFICATION
 Elementos: 	Elements: 
 Fechar	Close
 Há fichas escolhidas e não aplicadas. Fechar descarta essas escolhas. Continuar?	There are chosen specifications that were not applied. Closing discards these choices. Continue?
+Remover a classificação de 	Remove the classification of 
+Remover classificação	Remove classification
 aplicar a Classificação	apply the Classification
+os valores do Preencher Parâmetros ficam. Dá para desfazer no Revit (Ctrl+Z).	the Fill In Parameters values stay. It can be undone in Revit (Ctrl+Z).
+remover a Classificação	remove the Classification
 
 # src/BIMinFormation.Revit/UI/CleanupForm.cs
  deles com valores, que serão perdidos	 of them with values, which will be lost
@@ -556,10 +574,10 @@ nenhum	none
  · identidade sem ficha 	 · identity without specification 
 Abrir pré-validação	Open pre-validation
 Atualiza alguns segundos depois de cada alteração. Duplo clique abre a pré-validação na ficha.	Updates a few seconds after each change. Double-click opens the pre-validation on the specification.
-Atualizar	Refresh
 Nenhum elemento com ficha ainda. Classifique os elementos para acompanhar aqui.	No element with a specification yet. Classify the elements to follow them here.
 
 # src/BIMinFormation.Revit/UI/FillForm.cs
+ (SI, como o IDS pede)	 (SI, as the IDS requires)
  (no tipo)	 (on the type)
  elemento(s) de 	 element(s) of 
  elemento(s). O modelo não é salvo automaticamente. Continuar?	 element(s). The model is not saved automatically. Continue?
@@ -572,8 +590,10 @@ Nenhum elemento com ficha ainda. Classifique os elementos para acompanhar aqui.	
  · Sem ficha: 	 · Without specification: 
  · elemento: 	 · element: 
 ": o exportador lê o valor na hora de exportar.	": the exporter reads the value at export time.
+": o plugin copia o valor para o próprio parâmetro a cada Aplicar e Exportar (no Revit 2027, 	": the plugin copies the value to its own parameter on every Apply and Export (in Revit 2027, 
 (misto)	(mixed)
 (sem material)	(no material)
+(só o Revit 2027): ela fica com o cálculo do exportador.	(only Revit 2027): it stays with the exporter calculation.
 (todas)	(all)
 . Confira e clique em Aplicar.	. Check and click Apply.
 . Selecione os elementos e cole (Ctrl+V).	. Select the elements and paste (Ctrl+V).
@@ -582,17 +602,24 @@ BIMinFormation — Preencher Parâmetros	BIMinFormation — Fill In Parameters
 BIMinFormation — Preencher Parâmetros — 	BIMinFormation — Fill In Parameters — 
 BIMinFormation: vínculo	BIMinFormation: link
 Buscar:	Search:
+Calculada pelo exportador na exportação (valor informado só sai exportando do Revit 2027).	Calculated by the exporter when exporting (a given value only gets to the IFC exporting from Revit 2027).
+Calculada pelo exportador na exportação. Duplo clique no valor para informar um (substitui o cálculo).	Calculated by the exporter when exporting. Double-click the value to enter one (replaces the calculation).
 Calculado pelo plugin (material do elemento) e regravado a cada Aplicar e Exportar.	Calculated by the plugin (element material) and written again on every Apply and Export.
 Colar valores	Paste values
 Colar valores (	Paste values (
 Copiar valores	Copy values
+Digite no SI (como o IDS) ou com a unidade: 	Type it in SI (as the IDS) or with the unit: 
 FICHA	SPECIFICATION
 Ficha:	Specification:
 Instrução do .ids: 	.ids instruction: 
+Na unidade do projeto: 	In the project units: 
+Nesta versão do Revit o exportador não leva ao IFC uma quantidade informada 	In this Revit version the exporter does not take a given quantity to the IFC 
 No modelo: 	In the model: 
+O exportador calcula esta quantidade na exportação. Informar um valor substitui o cálculo em todo IFC 	The exporter calculates this quantity when exporting. Entering a value replaces the calculation in every IFC 
 PENDÊNCIAS	PENDING
 PROPRIEDADE	PROPERTY
 Parâmetro: 	Parameter: 
+Peso calculado pelo plugin (volume de cada material × densidade dos recursos físicos dele) e regravado a cada Aplicar e Exportar.	Weight calculated by the plugin (volume of each material × the density of its physical asset) and rewritten on every Apply and Export.
 Serão gravadas 	To be written: 
 Só com pendências	Pending only
 TIPO	TYPE
@@ -601,6 +628,8 @@ Valores: 	Values:
 Vinculado ao parâmetro do Revit "	Linked to the Revit parameter "
 Vincular ao Revit...	Link to Revit...
 aplicar o Preencher	apply Fill In Parameters
+exportado depois, e o Revit não deixa o parâmetro voltar a vazio (só o Ctrl+Z desfaz). Informar mesmo assim?	exported afterwards, and Revit does not let the parameter go back to empty (only Ctrl+Z undoes it). Enter it anyway?
+o exportador leria o parâmetro vinculado em todos os elementos do conjunto).	the exporter would read the linked parameter on every element of the property set).
 vincular ao Revit	link to Revit
 
 # src/BIMinFormation.Revit/UI/LinkForm.cs
@@ -608,9 +637,10 @@ vincular ao Revit	link to Revit
  parâmetro(s) compatível(is)	 compatible parameter(s)
 BIMinFormation — Vincular ao Revit	BIMinFormation — Link to Revit
 Material do elemento (todos ou um deles, escolhido no Preencher)	Element material (all or one of them, chosen in Fill In Parameters)
-O exportador lê o parâmetro vinculado na hora de exportar: o valor fica sempre atual e o plugin não cria parâmetro novo.	The exporter reads the linked parameter at export time: the value is always current and the plugin does not create a new parameter.
+O valor vem do vinculado: o exportador o lê na hora de exportar ou, quando precisa (quantidades, Revit 2027, 	The value comes from the linked source: the exporter reads it when exporting or, when needed (quantities, Revit 2027, 
 Onde	Where
 Parâmetro do Revit	Revit parameter
+Peso calculado (volume de cada material × densidade)	Calculated weight (volume of each material × density)
 Sem vínculo	No link
 Sugestão	Suggestion
 Só para 	Only for 
@@ -618,7 +648,9 @@ Valor (como sai no IFC)	Value (as exported to the IFC)
 Vincular	Link
 camadas	layers
 instância	instance
+materiais	materials
 tipo	type
+valores calculados), o plugin o copia a cada Aplicar e Exportar.	calculated values), the plugin copies it on every Apply and Export.
 
 # src/BIMinFormation.Revit/UI/PrevalidationForm.cs
  (obrigatória no .ids; nenhum elemento)	 (required in the .ids; no element)
@@ -635,7 +667,7 @@ tipo	type
 (nenhum elemento do modelo)	(no element in the model)
 , a conferir 	, to check 
 , falham 	, fail 
-. Atualizar volta ao resultado só do modelo.	. Refresh goes back to the model-only result.
+. "Voltar ao modelo" mostra o resultado só do modelo.	. "Back to model" shows the model-only result.
 A CONFERIR	TO CHECK
 A vista ativa não aceita cores (tabela, folha…): abra uma vista de planta, corte ou 3D.	The active view does not accept colors (schedule, sheet…): open a plan, section or 3D view.
 APLICÁVEIS	APPLICABLE
@@ -675,6 +707,7 @@ Salvar ▾	Save ▾
 Só fichas com elementos	Only specifications with elements
 Só o IFC confirma: material, Pset padrão vazio, classificação, atributos que o exportador preenche.	Only the IFC confirms it: material, empty standard Pset, classification, attributes the exporter fills in.
 Tópicos BCF das falhas	BCF topics of the failures
+Voltar ao modelo	Back to model
 colorir a vista	color the view
 conferência no IFC	check in the IFC
 limpar as cores	clear the colors
@@ -695,6 +728,7 @@ Desmarcar todos	Uncheck all
 Esconder no Preencher as exigências sem valor a preencher	Hide in Fill In Parameters the requirements with no value to fill in
 Esquema IFC alvo:	Target IFC schema:
 Exportar perfil...	Export profile...
+Exportar só os Pset_ e Qto_ que as fichas pedem	Export only the Pset_ and Qto_ the specifications ask for
 Falha ao ler os .ids: 	Failed to read the .ids files: 
 Gera o arquivo de PropertySets das fichas em uso, com os avisos e as opções de exportação.	Generates the PropertySets file of the specifications in use, with the warnings and the export options.
 Idioma:	Language:
@@ -710,10 +744,13 @@ Pasta com os arquivos .ids recebidos (lida recursivamente)	Folder with the .ids 
 Pasta dos .ids:	.ids folder:
 Perfil do BIMinFormation (*.json)|*.json	BIMinFormation profile (*.json)|*.json
 Perfil inválido: 	Invalid profile: 
+Protocolos costumam pedir que o IFC não leve informação além da exigida. No Revit 2027 saem só os conjuntos e 	Protocols usually ask that the IFC carries no information beyond what is required. In Revit 2027 only the standard property sets and 
 Salvar no projeto	Save to project
 Salvar...	Save...
 Selecionar...	Select...
 Situação:	Status:
+as propriedades padrão pedidos; do 2023 ao 2026 o exportador só liga ou desliga os conjuntos comuns inteiros: 	properties asked for are exported; from 2023 to 2026 the exporter only turns the common sets on or off as a whole: 
+ficam desligados quando nenhuma ficha pede um Pset_ padrão. Os conjuntos das fichas (ex.: BIMPR) sempre saem.	they are off when no specification asks for a standard Pset_. The specifications' own sets (e.g. BIMPR) are always exported.
 
 # src/BIMinFormation.Revit/UI/SpecPickerForm.cs
  linhas selecionadas	 selected rows

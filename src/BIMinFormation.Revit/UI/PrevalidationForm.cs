@@ -52,6 +52,7 @@ namespace BIMinFormation.Revit.UI
         /// <summary>Colors applied by the window (tests).</summary>
         internal Adapter.ViewColors ViewColors => _colors;
         private readonly Label _footer = new Label();
+        private readonly Button _back;
         private PrevalidationResult _result;
         private Dictionary<string, ElementInfo> _infos = new Dictionary<string, ElementInfo>();
         private readonly string _project;
@@ -115,7 +116,9 @@ namespace BIMinFormation.Revit.UI
             split.Panel1.Controls.Add(_specs);
             split.Panel2.Controls.Add(right);
 
-            var refresh = UiKit.Button(Tr.T("Atualizar"), (s, e) => RequestRebuild());
+            // the window follows the model changes by itself; after an IFC check, this goes back to the model-only result
+            _back = UiKit.Button(Tr.T("Voltar ao modelo"), (s, e) => RequestRebuild(), 130);
+            _back.Visible = false;
             var probe = UiKit.Button(Tr.T("Conferir no IFC"), (s, e) => RequestProbe(), 130);
             new ToolTip().SetToolTip(probe, Tr.T("Exporta um IFC temporário, como o botão Exportar, e avalia as fichas nele: o que está a conferir ")
                                             + Tr.T("vira passa ou falha. O modelo não muda. Em modelos grandes leva o tempo de uma exportação."));
@@ -130,7 +133,7 @@ namespace BIMinFormation.Revit.UI
             var close = UiKit.Button(Tr.T("Fechar"), (s, e) => Close());
             Controls.Add(split);
             Controls.Add(top);
-            Controls.Add(UiKit.Footer(_footer, probe, save, refresh, close));
+            Controls.Add(UiKit.Footer(_footer, probe, save, _back, close));
             CancelButton = close;
 
             _onlyWithElements.CheckedChanged += (s, e) => FillSpecs();
@@ -343,6 +346,7 @@ namespace BIMinFormation.Revit.UI
                             + (_result.Orphans.Count > 0 ? Tr.T(" · identidade sem ficha: ") + _result.Orphans.Count : "")
                             + (missing > 0 ? " · " + missing + Tr.T(" ficha(s) obrigatória(s) no .ids sem elemento no modelo") : "");
             var probe = _result.Probe;
+            _back.Visible = probe != null;
             if (probe != null)
             {
                 _summary.Text += Tr.T(" · conferido no IFC (") + Core.Profile.ProfileStatus.Name(probe.Schema)
@@ -350,7 +354,7 @@ namespace BIMinFormation.Revit.UI
                 var notes = new List<string> { probe.Decided + Tr.T(" verificação(ões) decidida(s) pelo IFC (") + probe.Resolved + Tr.T(" estavam a conferir)") };
                 if (probe.NotExported > 0) notes.Add(probe.NotExported + Tr.T(" não saíram no IFC"));
                 if (probe.NotApplicableInIfc > 0) notes.Add(probe.NotApplicableInIfc + Tr.T(" fora da ficha no IFC"));
-                _footer.Text = string.Join("; ", notes) + Tr.T(". Atualizar volta ao resultado só do modelo.");
+                _footer.Text = string.Join("; ", notes) + Tr.T(". \"Voltar ao modelo\" mostra o resultado só do modelo.");
             }
             else
             {

@@ -75,6 +75,36 @@ namespace BIMinFormation.Exporter
         private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Facet, Dictionary<(IfcSchemaCatalog, ExporterCatalog), OriginResult>> Known =
             new System.Runtime.CompilerServices.ConditionalWeakTable<Facet, Dictionary<(IfcSchemaCatalog, ExporterCatalog), OriginResult>>();
 
+        /// <summary>
+        /// Standard quantity the Revit exporter does not calculate: the weights (<c>IFCMASSMEASURE</c>: <c>NetWeight</c>,
+        /// <c>GrossWeight</c>, <c>Weight</c>…). Measured in Revit 2027 with the 210 BIM PR specifications (beams, columns,
+        /// piles, ducts, equipment): no weight came out. The value only gets to the IFC through the <c>Qto_</c> parameter.
+        /// </summary>
+        public static bool NotCalculatedByExporter(Facet facet, IfcSchemaCatalog schema)
+        {
+            if (!(facet is PropertyFacet property) || !(property.PropertySet is SimpleValue set) || !(property.BaseName is SimpleValue name)
+                || !set.Text.StartsWith("Qto_", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            return IsWeight(schema.PropertySet(set.Text)?.Property(name.Text)?.DataType ?? property.DataType);
+        }
+
+        /// <summary>
+        /// The exporter writes a quantity given in its <c>Qto_</c> parameter for any entity only from Revit 2027 on. Measured
+        /// with a slab: Revit 2025 and 2026 ignore the parameter (they calculate the slab quantities themselves) and Revit 2023
+        /// fails to export the slab ("unexpected error"). Before 2027 the quantities stay with the exporter.
+        /// </summary>
+        public static bool AcceptsQuantityValues(ExporterCatalog exporter) => exporter.Year >= 2027;
+
+        /// <summary>Why a quantity the exporter does not calculate cannot get to the IFC from this Revit.</summary>
+        public static string NoQuantityValues(ExporterCatalog exporter) =>
+            Tr.T("o exportador do Revit ") + exporter.Year + Tr.T(" não calcula esta quantidade nem aceita um valor informado: ")
+            + Tr.T("só sai exportando do Revit 2027");
+
+        private static bool IsWeight(string? dataType) => string.Equals(dataType, "IFCMASSMEASURE", StringComparison.OrdinalIgnoreCase);
+
         public static OriginResult Classify(Facet facet, IfcSchemaCatalog schema, ExporterCatalog exporter)
         {
             var known = Known.GetOrCreateValue(facet);
@@ -189,9 +219,15 @@ namespace BIMinFormation.Exporter
                                 ?? exporter.FindStandardParameter(pset.Text, property.Text, ParameterScope.Type);
                 if (isQto)
                 {
+                    bool weight = IsWeight(propertyTemplate.DataType ?? facet.DataType);
                     return new OriginResult(ValueOrigin.ExporterQuantity,
-                        Tr.T("calculada com 'Exportar quantidades base'")
-                        + (parameter != null ? Tr.T(", ou pelo parâmetro ") + parameter.ParameterName : ""), parameter);
+                        weight && !AcceptsQuantityValues(exporter)
+                            ? NoQuantityValues(exporter)
+                            : (weight
+                                  ? Tr.T("o exportador do Revit não calcula pesos: vincule (ex.: peso calculado) ou informe")
+                                  : Tr.T("calculada com 'Exportar quantidades base'"))
+                              + (parameter != null && AcceptsQuantityValues(exporter) ? Tr.T(", ou pelo parâmetro ") + parameter.ParameterName : ""),
+                        parameter);
                 }
 
                 // the installed parameters mirror the exporter Pset definitions: without a parameter (or without the type in the

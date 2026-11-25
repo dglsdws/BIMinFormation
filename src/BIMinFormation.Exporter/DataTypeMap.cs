@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using BIMinFormation.Ids;
 
 namespace BIMinFormation.Exporter
@@ -104,6 +105,9 @@ namespace BIMinFormation.Exporter
             ["SoundPower"] = "Number",
             ["SoundPressure"] = "Number",
         };
+
+        /// <summary>Every Revit spec the plugin creates parameters with (tests: each measure must have an SI unit).</summary>
+        public static IEnumerable<string> RevitSpecNames => Specs.Values.Distinct(StringComparer.Ordinal);
 
         private static readonly Dictionary<string, string> AmbiguousNotes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {

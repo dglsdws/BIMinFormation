@@ -49,9 +49,6 @@ namespace BIMinFormation.Revit.UI
         /// <summary>Request to open the pre-validation (chosen specification, or <c>null</c>); handled in Revit Idling.</summary>
         public event Action<string?>? OpenRequested;
 
-        /// <summary>Request to refresh now.</summary>
-        public event Action? RefreshRequested;
-
         internal int RowCount => _list.Items.Count;
         internal string SummaryText => _summary.Text;
 
@@ -65,13 +62,11 @@ namespace BIMinFormation.Revit.UI
             _list.View = view;
             _list.MouseDoubleClick += (s, e) => OpenRequested?.Invoke((_list.SelectedItem as ConformityRow)?.Name);
 
-            var open = new WpfButton { Content = Tr.T("Abrir pré-validação"), Padding = new Thickness(8, 2, 8, 2), Margin = new Thickness(0, 0, 6, 0) };
+            // no Refresh button: the panel follows the model changes by itself (PaneController)
+            var open = new WpfButton { Content = Tr.T("Abrir pré-validação"), Padding = new Thickness(8, 2, 8, 2) };
             open.Click += (s, e) => OpenRequested?.Invoke((_list.SelectedItem as ConformityRow)?.Name);
-            var refresh = new WpfButton { Content = Tr.T("Atualizar"), Padding = new Thickness(8, 2, 8, 2) };
-            refresh.Click += (s, e) => RefreshRequested?.Invoke();
             var buttons = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 6, 0, 0) };
             buttons.Children.Add(open);
-            buttons.Children.Add(refresh);
 
             var root = new DockPanel { Margin = new Thickness(8), LastChildFill = true };
             foreach (var top in new UIElement[] { _title, _summary, _progress })

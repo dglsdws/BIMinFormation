@@ -101,7 +101,7 @@ namespace BIMinFormation.Core.Prevalidation
                     if (id != null) seen.Add(id);
                     if (id != null && results.TryGetValue(id, out var result))
                     {
-                        elements.Add(FromIfc(check.Specification, element.Element, result));
+                        elements.Add(FromIfc(check.Specification, element.Element, result, exported.TryGetValue(id, out var inFile) ? inFile : null, ifc.Schema));
                         info.Decided++;
                         if (element.Status == CheckStatus.Unknown) info.Resolved++;
                     }
@@ -123,7 +123,7 @@ namespace BIMinFormation.Core.Prevalidation
                 {
                     if (revitByGlobalId.TryGetValue(pair.Key, out var revit))
                     {
-                        elements.Add(FromIfc(check.Specification, revit, pair.Value));
+                        elements.Add(FromIfc(check.Specification, revit, pair.Value, exported.TryGetValue(pair.Key, out var inFile) ? inFile : null, ifc.Schema));
                         info.Decided++;
                     }
                     else
@@ -138,15 +138,45 @@ namespace BIMinFormation.Core.Prevalidation
             return new PrevalidationResult(checks, model.Orphans, model.Model, info);
         }
 
-        private static ElementCheck FromIfc(Specification specification, ElementState revit, ElementResult result) =>
+        private static ElementCheck FromIfc(Specification specification, ElementState revit, ElementResult result, ElementState? inFile,
+            IfcSchemaVersion schema) =>
             new ElementCheck(revit, specification.Requirements.Facets.Select(f =>
             {
                 var failure = result.Failures.FirstOrDefault(x => ReferenceEquals(x.Facet, f));
                 string label = Prevalidator.Label(f);
                 return failure == null
-                    ? new RequirementCheck(f, CheckStatus.Pass, label, null)
+                    ? new RequirementCheck(f, CheckStatus.Pass, label, Quantity(f, inFile, schema))
                     : new RequirementCheck(f, CheckStatus.Fail, label, Tr.T("no IFC: ") + Prevalidator.Describe(failure.Result));
             }).ToList(), fromIfc: true);
+
+        /// <summary>The value of a quantity in the IFC (the exporter calculates it only when exporting): "in the IFC: 12.5".</summary>
+        private static string? Quantity(Facet facet, ElementState? inFile, IfcSchemaVersion schema)
+        {
+            if (inFile == null || !(facet is PropertyFacet { PropertySet: SimpleValue set, BaseName: SimpleValue name })
+                || !(set.Text.StartsWith("Qto_", StringComparison.Ordinal) || set.Text == "BaseQuantities"))
+            {
+                return null;
+            }
+
+            var value = inFile.PropertySets.FirstOrDefault(s => s.Name == set.Text)?.Properties.FirstOrDefault(p => p.Name == name.Text)
+                ?.Values.FirstOrDefault(v => !v.IsEmpty);
+            return value == null ? null : Tr.T("no IFC: ") + QuantityText(value, IfcSchemaCatalog.For(schema).PropertySet(set.Text)?.Property(name.Text)?.DataType ?? ((PropertyFacet)facet).DataType);
+        }
+
+        /// <summary>
+        /// A quantity as the user reads it: 12 significant digits (no noise from the feet conversion) and the weight in kg. The
+        /// reader keeps the IfcTester rule for quantities (mass converted to grams, unlike the properties), so the engine and the
+        /// IfcTester agree; only the text shows kg.
+        /// </summary>
+        public static string QuantityText(StateValue value, string? dataType)
+        {
+            if (value.Kind != ValueKind.Real && value.Kind != ValueKind.Integer) return value.ToString();
+            bool mass = string.Equals(dataType, "IFCMASSMEASURE", StringComparison.OrdinalIgnoreCase);
+            double number = mass ? value.Number / 1000 : value.Number;
+            return double.Parse(number.ToString("G12", System.Globalization.CultureInfo.InvariantCulture), System.Globalization.CultureInfo.InvariantCulture)
+                       .ToString("R", System.Globalization.CultureInfo.InvariantCulture)
+                   + (mass ? " kg" : "");
+        }
 
         /// <summary>
         /// The IFC does not decide: the element stays to check, with the reason (not exported, or the specification does not

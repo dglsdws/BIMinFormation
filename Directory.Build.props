@@ -6,7 +6,7 @@
     <Deterministic>true</Deterministic>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <Version>0.9.2</Version>
+    <Version>0.9.3</Version>
     <Company>Douglas W. Santos</Company>
     <Product>BIMinFormation</Product>
     <Authors>Douglas W. Santos</Authors>

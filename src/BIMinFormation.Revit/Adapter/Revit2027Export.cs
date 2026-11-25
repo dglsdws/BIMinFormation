@@ -99,7 +99,78 @@ namespace BIMinFormation.Revit.Adapter
             template.ExportRevitMaterialParameters = false;
             template.ExportRevitSchedules = false;
             template.ExportUserDefinedPropertySets = setup.PropertySetsFile != null;
+            Restrict(template, PropertySetupType.IfcCommonPropertySets, setup);
+            Restrict(template, PropertySetupType.IfcBaseQuantities, setup);
             return template.Name;
+        }
+
+        /// <summary>
+        /// "Only what the IDS asks": every standard set the exporter may write (the ones of the IFC 2x3, 4 and 4.3 catalogs, plus
+        /// the ones already in the template) goes into the template, the sets outside <see cref="ExportSetup.RequestedSets"/>
+        /// marked as not exported and, in the requested sets, the properties not asked for mapped as not exported. A template
+        /// created by the API is empty (the export window is what fills it), and the exporter only leaves out what the template
+        /// lists as not exported (revit-ifc <c>Release_27.x.x</c>, <c>ExporterInitializer.ExcludeNotExportingPropertySets</c> and
+        /// <c>ExcludeNotExportingProperties</c>). With the option off, or a set named by a pattern, everything goes back to
+        /// exported. Returns the sets and properties left out.
+        /// </summary>
+        public static (int Sets, int Properties) Restrict(IFCParameterTemplate template, PropertySetupType type, ExportSetup setup)
+        {
+            bool quantities = type == PropertySetupType.IfcBaseQuantities;
+            var requested = setup.OnlyRequested ? setup.RequestedSets : null;
+            var known = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+            foreach (var version in new[] { IfcSchemaVersion.Ifc2X3, IfcSchemaVersion.Ifc4, IfcSchemaVersion.Ifc4X3Add2 })
+            {
+                foreach (var set in IfcSchemaCatalog.For(version).PropertySets.Where(s => s.IsQuantitySet == quantities))
+                {
+                    if (!known.TryGetValue(set.Name, out var names)) known[set.Name] = names = new HashSet<string>(StringComparer.Ordinal);
+                    names.UnionWith(set.Properties.Select(p => p.Name));
+                }
+            }
+
+            foreach (string name in template.GetPropertySetNames(type, PropertySelectionType.All))
+            {
+                if (!known.ContainsKey(name)) known[name] = new HashSet<string>(StringComparer.Ordinal);
+            }
+
+            int sets = 0, properties = 0;
+            foreach (var pair in known)
+            {
+                ISet<string>? asked = null;
+                bool export = requested == null || requested.TryGetValue(pair.Key, out asked);
+                if (!template.IsPropertySetAMemberOfTemplate(type, pair.Key))
+                {
+                    if (export && asked == null) continue; // not listed = exported with every property
+                    template.AddPropertySet(type, export, pair.Key);
+                }
+                else if (template.IsExportingPropertySet(type, pair.Key) != export)
+                {
+                    template.SetPropertySetExportingFlag(type, pair.Key, export);
+                }
+
+                if (!export)
+                {
+                    sets++;
+                    continue;
+                }
+
+                foreach (string property in pair.Value)
+                {
+                    bool keep = asked == null || asked.Contains(property);
+                    var info = template.FindPropertyMappingInfo(type, pair.Key, property);
+                    if (keep)
+                    {
+                        if (info != null && !info.ExportFlag) template.RemovePropertyMappingInfo(type, pair.Key, property);
+                        continue;
+                    }
+
+                    properties++;
+                    if (info != null && !info.ExportFlag) continue;
+                    if (info != null) template.RemovePropertyMappingInfo(type, pair.Key, property);
+                    template.AddPropertyMappingInfo(type, pair.Key, new IFCPropertyMappingInfo(false, property, ElementId.InvalidElementId, property));
+                }
+            }
+
+            return (sets, properties);
         }
     }
 }

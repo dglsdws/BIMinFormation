@@ -35,18 +35,36 @@ namespace BIMinFormation.Core.Mapping
 
         public bool CanExport => IfcVersion != null && Problems.Count == 0;
 
+        /// <summary>
+        /// Only the standard sets the specifications ask for (project option, see <c>ProjectProfile.ExportOnlyRequested</c>):
+        /// the common sets are turned off when no specification asks for one, and, where the exporter allows (Revit 2027
+        /// parameter template), every standard set and property outside <see cref="RequestedSets"/> is left out.
+        /// </summary>
+        public bool OnlyRequested { get; private set; }
+
+        /// <summary>
+        /// Standard sets the exporter generates (<c>Pset_</c> common and <c>Qto_</c>) asked for in the applicability or the
+        /// requirements, with the properties asked for (<c>null</c> = every property of the set); <c>null</c> when a
+        /// specification names the set by a pattern (then nothing is left out).
+        /// </summary>
+        public IReadOnlyDictionary<string, ISet<string>?>? RequestedSets { get; private set; }
+
         public static ExportSetup Build(IEnumerable<Specification> specifications, IfcSchemaVersion schema,
-            ExporterCatalog exporter, string? propertySetsFile)
+            ExporterCatalog exporter, string? propertySetsFile, bool onlyRequested = false)
         {
             var specs = specifications.ToList();
             var catalog = IfcSchemaCatalog.For(schema);
             var origins = specs.SelectMany(s => s.Requirements.Facets)
                 .Select(f => ValueOrigins.Classify(f, catalog, exporter).Origin)
                 .ToList();
+            var requested = Requested(specs, catalog, exporter);
             var setup = new ExportSetup
             {
                 BaseQuantities = origins.Contains(ValueOrigin.ExporterQuantity),
                 PropertySetsFile = propertySetsFile,
+                OnlyRequested = onlyRequested,
+                RequestedSets = requested,
+                CommonPropertySets = !onlyRequested || requested == null || requested.Keys.Any(k => !k.StartsWith("Qto_", System.StringComparison.Ordinal)),
             };
 
             string? version = schema switch
@@ -83,6 +101,39 @@ namespace BIMinFormation.Core.Mapping
 
             setup.IfcVersion = version;
             return setup;
+        }
+
+        /// <summary>See <see cref="RequestedSets"/>.</summary>
+        private static Dictionary<string, ISet<string>?>? Requested(IEnumerable<Specification> specifications, IfcSchemaCatalog catalog,
+            ExporterCatalog exporter)
+        {
+            var sets = new Dictionary<string, ISet<string>?>(System.StringComparer.Ordinal);
+            foreach (var facet in specifications.SelectMany(s => s.Applicability.Facets.Concat(s.Requirements.Facets)).OfType<PropertyFacet>())
+            {
+                if (!(facet.PropertySet is SimpleValue set))
+                {
+                    return null; // a pattern may name any standard set
+                }
+
+                var origin = ValueOrigins.Classify(facet, catalog, exporter).Origin;
+                if (origin != ValueOrigin.StandardParameter && origin != ValueOrigin.ExporterQuantity) continue;
+                if (!(facet.BaseName is SimpleValue name))
+                {
+                    sets[set.Text] = null;
+                    continue;
+                }
+
+                if (sets.TryGetValue(set.Text, out var properties))
+                {
+                    properties?.Add(name.Text);
+                }
+                else
+                {
+                    sets[set.Text] = new HashSet<string>(System.StringComparer.Ordinal) { name.Text };
+                }
+            }
+
+            return sets;
         }
     }
 }

@@ -20,6 +20,9 @@ namespace BIMinFormation.Core.Profile
         /// <summary>Source calculated by the plugin: names of the element materials.</summary>
         public const string DerivedMaterial = "@Material";
 
+        /// <summary>Source calculated by the plugin: weight of the element (volume of each material × its density), in kg.</summary>
+        public const string DerivedWeight = "@Weight";
+
         public bool IsDerived => Parameter.StartsWith("@", StringComparison.Ordinal);
 
         [DataMember(Name = "propertySet", Order = 1)]
@@ -121,6 +124,13 @@ namespace BIMinFormation.Core.Profile
         /// <summary>Map every specification in the folder, not only the ones in use.</summary>
         [DataMember(Name = "mapAllSpecifications", Order = 14)]
         public bool MapAllSpecifications { get; set; }
+
+        /// <summary>
+        /// Export only the standard sets and properties (<c>Pset_</c>, <c>Qto_</c>) the specifications ask for: protocols
+        /// usually ask for no excess information. Off = every common set the exporter generates.
+        /// </summary>
+        [DataMember(Name = "exportOnlyRequested", Order = 15)]
+        public bool ExportOnlyRequested { get; set; } = true;
 
         /// <summary>The specifications that go into the mapping: the ones in use, or all (option, or list not computed yet).</summary>
         public IReadOnlyList<Specification> MappedSpecifications(IReadOnlyList<Specification> all)
@@ -225,6 +235,7 @@ namespace BIMinFormation.Core.Profile
             // the serializer does not run initializers: defaults for missing fields
             Version = CurrentVersion;
             HideWhenNoValue = true;
+            ExportOnlyRequested = true;
             IdsFiles = new List<string>();
             TypeProperties = new List<string>();
             Mappings = new List<ParameterMapping>();

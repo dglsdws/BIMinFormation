@@ -151,24 +151,8 @@ namespace BIMinFormation.Revit.Services
                 });
             }
 
-            // the building: Project Information, which the exporter writes as IfcBuilding. Offered so that a specification
-            // applied by a property (an identity such as an EOI) can be written there; the entity is fixed
-            var info = document.ProjectInformation;
-            if (info != null)
-            {
-                var state = model.Find(info.Id.IdValue().ToString());
-                rows.Add(new ClassificationRow
-                {
-                    Id = info.Id,
-                    Order = order++,
-                    Name = Tr.T("Edifício (Informações do projeto)"),
-                    Category = info.Category?.Name ?? "",
-                    CurrentEntity = "IfcBuilding",
-                    Origin = EntityOrigin.Inferred,
-                    Recognition = state == null ? null : recognizer.Recognize(state, model),
-                });
-            }
-
+            // no row for the building (Project Information): what a specification calls a building is not necessarily the
+            // project (in the BIM PR protocol it is a massing study); its properties are still filled in Fill In Parameters
             return rows;
         }
 
@@ -190,12 +174,7 @@ namespace BIMinFormation.Revit.Services
             transaction.Start();
 
             // 1. identity parameters (and the fallback IfcObjectType), bound to the union of the batch categories
-            ParameterRequest Identity(Core.Classification.IdentityWrite write)
-            {
-                var dataType = DataTypeMap.Resolve(write.DataType ?? "IFCLABEL", context.Exporter);
-                string name = context.Mapping.NameFor(write.PropertySet, write.Property, dataType.PropertyType ?? "Label", ParameterScope.Instance);
-                return ParameterRequest.For(write.PropertySet, write.Property, dataType, false, name: name);
-            }
+            ParameterRequest Identity(Core.Classification.IdentityWrite write) => IdentityRequest(context, write);
 
             foreach (var write in pending.SelectMany(r => r.Chosen!.Properties).GroupBy(w => w.PropertySet + "/" + w.Property).Select(g => g.First()))
             {
@@ -239,16 +218,9 @@ namespace BIMinFormation.Revit.Services
                     continue;
                 }
 
-                bool building = element is ProjectInfo;
-                if (building && action.Entity != null && !string.Equals(action.Entity, "IfcBuilding", StringComparison.OrdinalIgnoreCase))
-                {
-                    summary.Failures.Add(row.ElementText + ": " + Tr.T("as Informações do projeto são o edifício (IfcBuilding); escolha uma ficha de edifício."));
-                    continue;
-                }
-
                 try
                 {
-                    int changes = writer.Apply(element, action, Identity, writeEntity: !building);
+                    int changes = writer.Apply(element, action, Identity);
                     if (changes > 0) summary.Applied++; else summary.Unchanged++;
 
                     // what the exporter will not do with this element, said now instead of only in the IFC check
@@ -296,6 +268,74 @@ namespace BIMinFormation.Revit.Services
             }
 
             return summary;
+        }
+
+        /// <summary>Plugin parameter of an identity property (the name the mapping gives it, found by GUID).</summary>
+        private static ParameterRequest IdentityRequest(PluginContext context, Core.Classification.IdentityWrite write)
+        {
+            var dataType = DataTypeMap.Resolve(write.DataType ?? "IFCLABEL", context.Exporter);
+            string name = context.Mapping.NameFor(write.PropertySet, write.Property, dataType.PropertyType ?? "Label", ParameterScope.Instance);
+            return ParameterRequest.For(write.PropertySet, write.Property, dataType, false, name: name);
+        }
+
+        /// <summary>
+        /// Removes the Classification of the rows: for every specification recognized on the element, clears what applying it
+        /// writes (identity, entity, predefined type, object type, attribute overrides, classification code), where the element
+        /// still has that value. Values filled in later (Fill In Parameters) stay. A single transaction.
+        /// </summary>
+        public static ApplySummary Remove(Document document, PluginContext context, IReadOnlyList<ClassificationRow> rows, string parametersFile)
+        {
+            var summary = new ApplySummary();
+            var writer = new ParameterWriter(document, parametersFile);
+            using var transaction = new Transaction(document, Tr.T("BIMinFormation: Remover classificação"));
+            transaction.Start();
+            foreach (var row in rows)
+            {
+                var element = document.GetElement(row.Id);
+                var specifications = row.Recognition?.Specifications ?? (IReadOnlyList<Specification>)Array.Empty<Specification>();
+                if (element == null || specifications.Count == 0)
+                {
+                    summary.Unchanged++;
+                    continue;
+                }
+
+                try
+                {
+                    int changes = 0;
+                    foreach (var action in specifications.SelectMany(s => Variants(ClassificationAction.For(s, context.Schema))))
+                    {
+                        changes += writer.Clear(element, action, w => IdentityRequest(context, w));
+                    }
+
+                    if (changes > 0) summary.Applied++; else summary.Unchanged++;
+                }
+                catch (Exception ex)
+                {
+                    summary.Failures.Add(row.ElementText + ": " + ex.Message);
+                }
+            }
+
+            if (summary.Applied > 0)
+            {
+                transaction.Commit();
+            }
+            else
+            {
+                transaction.RollBack();
+            }
+
+            return summary;
+        }
+
+        /// <summary>The action and, when the specification lets the user pick the predefined type, one action per choice.</summary>
+        private static IEnumerable<ClassificationAction> Variants(ClassificationAction action)
+        {
+            yield return action;
+            if (action.PredefinedType != null || action.PredefinedTypeChoices == null) yield break;
+            foreach (string choice in action.PredefinedTypeChoices)
+            {
+                yield return action.WithPredefinedType(choice);
+            }
         }
     }
 

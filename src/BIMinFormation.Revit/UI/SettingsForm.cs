@@ -31,6 +31,11 @@ namespace BIMinFormation.Revit.UI
             Text = Tr.T("Mapear todas as fichas da pasta (por padrão, só as fichas em uso no modelo)"),
             AutoSize = true,
         };
+        private readonly CheckBox _onlyRequested = new CheckBox
+        {
+            Text = Tr.T("Exportar só os Pset_ e Qto_ que as fichas pedem"),
+            AutoSize = true,
+        };
         private readonly CheckBox _hide = new CheckBox { Text = Tr.T("Esconder no Preencher as exigências sem valor a preencher"), AutoSize = true };
         private readonly Label _status = new Label { Dock = DockStyle.Fill, AutoEllipsis = false };
 
@@ -84,6 +89,11 @@ namespace BIMinFormation.Revit.UI
             Row(Tr.T("Parâmetros:"), _parameters, UiKit.Button(Tr.T("Selecionar..."), (s, e) => PickParameters()));
             Row("", _hide);
             Row("", _mapAll);
+            Row("", _onlyRequested);
+            new ToolTip { AutoPopDelay = 20000 }.SetToolTip(_onlyRequested,
+                Tr.T("Protocolos costumam pedir que o IFC não leve informação além da exigida. No Revit 2027 saem só os conjuntos e ")
+                + Tr.T("as propriedades padrão pedidos; do 2023 ao 2026 o exportador só liga ou desliga os conjuntos comuns inteiros: ")
+                + Tr.T("ficam desligados quando nenhuma ficha pede um Pset_ padrão. Os conjuntos das fichas (ex.: BIMPR) sempre saem."));
             Row(Tr.T("Idioma:"), _language);
             var propertySets = UiKit.Button(Tr.T("Salvar..."), (s, e) =>
             {
@@ -142,6 +152,7 @@ namespace BIMinFormation.Revit.UI
             _parameters.Text = profile.ParametersFile ?? "";
             _hide.Checked = profile.HideWhenNoValue;
             _mapAll.Checked = profile.MapAllSpecifications;
+            _onlyRequested.Checked = profile.ExportOnlyRequested;
             _schema.SelectedItem = profile.TargetSchema ?? Tr.T("Automático (dos .ids)");
             if (_schema.SelectedIndex < 0) _schema.SelectedIndex = 0;
             _loading = false;
@@ -183,6 +194,7 @@ namespace BIMinFormation.Revit.UI
             profile.ParametersFile = _parameters.Text.Trim().Length == 0 ? null : _parameters.Text.Trim();
             profile.HideWhenNoValue = _hide.Checked;
             profile.MapAllSpecifications = _mapAll.Checked;
+            profile.ExportOnlyRequested = _onlyRequested.Checked;
             return profile;
         }
 

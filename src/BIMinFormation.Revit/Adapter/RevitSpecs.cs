@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Autodesk.Revit.DB;
 
@@ -56,8 +57,54 @@ namespace BIMinFormation.Revit.Adapter
             return property?.GetValue(null) as ForgeTypeId;
         }
 
-        public static ForgeTypeId? SiUnit(ForgeTypeId spec) =>
-            SiUnits.TryGetValue(spec.TypeId, out var unit) ? unit : null;
+        /// <summary>
+        /// SI units the IDS uses (and the coherent derived ones), looked up by name: a spec outside the table above gets the
+        /// one Revit accepts for it. Without this, a quantity such as illuminance or thermal resistance went in Revit internal
+        /// units (based on feet).
+        /// </summary>
+        private static readonly string[] SiNames =
+        {
+            "Meters", "SquareMeters", "CubicMeters", "Radians", "Kilograms", "Kelvin", "Pascals", "Watts", "Volts", "Amperes", "Hertz",
+            "CubicMetersPerSecond", "MetersPerSecond", "Newtons", "Joules", "WattsPerSquareMeterKelvin", "WattsPerMeterKelvin",
+            "KilogramsPerCubicMeter", "Seconds", "Lux", "Lumens", "Candelas", "LumensPerWatt", "OhmMeters", "Ohms",
+            "SquareMeterKelvinsPerWatt", "NewtonsPerMeter", "NewtonsPerSquareMeter", "JoulesPerKilogramDegreeCelsius",
+            "KilogramsPerSecond", "KilogramsPerMeter", "KilogramsPerSquareMeter", "MetersToTheFourthPower", "MetersToTheSixthPower",
+            "NewtonMeters",
+        };
+
+        private static readonly Dictionary<string, ForgeTypeId?> Found = new Dictionary<string, ForgeTypeId?>(StringComparer.Ordinal);
+
+        /// <summary>SI unit of the spec; <c>null</c> for a spec without unit (number, currency, text).</summary>
+        public static ForgeTypeId? SiUnit(ForgeTypeId spec)
+        {
+            if (SiUnits.TryGetValue(spec.TypeId, out var unit)) return unit;
+            lock (Found)
+            {
+                if (Found.TryGetValue(spec.TypeId, out var known)) return known;
+            }
+
+            ForgeTypeId? result = null;
+            if (UnitUtils.IsMeasurableSpec(spec))
+            {
+                var valid = UnitUtils.GetValidUnits(spec);
+                foreach (string name in SiNames)
+                {
+                    var candidate = typeof(UnitTypeId).GetProperty(name, BindingFlags.Public | BindingFlags.Static)?.GetValue(null) as ForgeTypeId;
+                    if (candidate != null && valid.Any(v => v.TypeId == candidate.TypeId))
+                    {
+                        result = candidate;
+                        break;
+                    }
+                }
+            }
+
+            lock (Found)
+            {
+                Found[spec.TypeId] = result;
+            }
+
+            return result;
+        }
 
         /// <summary>
         /// Revit internal value → SI (or the value itself, when the spec has no unit), rounded to 12 significant digits: the
@@ -75,6 +122,21 @@ namespace BIMinFormation.Revit.Adapter
             value == 0 || double.IsNaN(value) || double.IsInfinity(value)
                 ? value
                 : double.Parse(value.ToString("G12", System.Globalization.CultureInfo.InvariantCulture), System.Globalization.CultureInfo.InvariantCulture);
+
+        /// <summary>
+        /// A value in SI (text with a decimal point) as the project shows it, in the units the user works with ("200 mm");
+        /// <c>null</c> for a spec without unit or a text that is not a number.
+        /// </summary>
+        public static string? InProject(Document document, ForgeTypeId? spec, string siText)
+        {
+            if (spec == null || SiUnit(spec) == null
+                || !double.TryParse(siText, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double si))
+            {
+                return null;
+            }
+
+            return UnitFormatUtils.Format(document.GetUnits(), spec, FromSi(si, spec), false);
+        }
 
         public static double FromSi(double siValue, ForgeTypeId spec)
         {

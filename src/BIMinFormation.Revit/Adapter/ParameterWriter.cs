@@ -216,11 +216,7 @@ namespace BIMinFormation.Revit.Adapter
         /// <c>IFC_EXPORT_PREDEFINEDTYPE</c>), <c>IfcObjectType</c> in the fallback and the identity properties. The identity
         /// parameters must exist (see <see cref="Ensure"/>).
         /// </summary>
-        /// <param name="writeEntity">
-        /// <c>false</c> for Project Information (the building): its entity is fixed, only identity and properties are written.
-        /// </param>
-        public int Apply(Element element, ClassificationAction action, Func<IdentityWrite, ParameterRequest>? identity = null,
-            bool writeEntity = true)
+        public int Apply(Element element, ClassificationAction action, Func<IdentityWrite, ParameterRequest>? identity = null)
         {
             if (!action.CanApply || action.NeedsPredefinedChoice)
             {
@@ -229,17 +225,17 @@ namespace BIMinFormation.Revit.Adapter
             }
 
             int changes = 0;
-            if (action.ExportAs != null && writeEntity)
+            if (action.ExportAs != null)
             {
                 changes += SetBuiltIn(element, BuiltInParameter.IFC_EXPORT_ELEMENT_AS, action.ExportAs);
             }
 
-            if (action.PredefinedType != null && writeEntity)
+            if (action.PredefinedType != null)
             {
                 changes += SetBuiltIn(element, BuiltInParameter.IFC_EXPORT_PREDEFINEDTYPE, action.PredefinedType);
             }
 
-            if (action.ObjectType != null && writeEntity)
+            if (action.ObjectType != null)
             {
                 changes += Set(element, "IfcObjectType", action.ObjectType);
             }
@@ -265,6 +261,52 @@ namespace BIMinFormation.Revit.Adapter
             }
 
             return changes;
+        }
+
+        /// <summary>
+        /// Undoes the Classification of a specification: clears what <see cref="Apply"/> writes for it, only where the element
+        /// still has exactly that value (a value changed by hand since then stays). Text parameters become empty, which the
+        /// exporter treats as no value; the entity and predefined type go back to the category default. Returns how many
+        /// parameters were cleared.
+        /// </summary>
+        public int Clear(Element element, ClassificationAction action, Func<IdentityWrite, ParameterRequest>? identity = null)
+        {
+            int changes = 0;
+            if (action.ExportAs != null) changes += ClearIf(element.get_Parameter(BuiltInParameter.IFC_EXPORT_ELEMENT_AS), action.ExportAs);
+            if (action.PredefinedType != null) changes += ClearIf(element.get_Parameter(BuiltInParameter.IFC_EXPORT_PREDEFINEDTYPE), action.PredefinedType);
+            if (action.ObjectType != null) changes += ClearIf(element.LookupParameter("IfcObjectType"), action.ObjectType);
+            foreach (var write in action.Properties)
+            {
+                var request = identity?.Invoke(write);
+                var parameter = request == null
+                    ? element.LookupParameter(write.PropertySet + "." + write.Property)
+                    : element.get_Parameter(request.Guid) ?? element.LookupParameter(request.Name);
+                changes += ClearIf(parameter, write.Value);
+            }
+
+            foreach (var attribute in action.Attributes)
+            {
+                if (ValueOrigins.AttributeOverrides.TryGetValue(attribute.Key, out string? parameter))
+                {
+                    changes += ClearIf(ModelReader.Lookup(element, parameter), attribute.Value);
+                }
+            }
+
+            foreach (string code in action.ClassificationCodes)
+            {
+                changes += ClearIf(element.LookupParameter("ClassificationCode"), code);
+            }
+
+            return changes;
+        }
+
+        private static int ClearIf(Parameter? parameter, string value)
+        {
+            if (parameter == null || parameter.IsReadOnly || parameter.StorageType != StorageType.String) return 0;
+            string? current = parameter.AsString();
+            if (string.IsNullOrEmpty(current) || !string.Equals(current, value, StringComparison.Ordinal)) return 0;
+            parameter.Set("");
+            return 1;
         }
 
         private static int SetBuiltIn(Element element, BuiltInParameter id, string value)

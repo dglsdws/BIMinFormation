@@ -61,8 +61,9 @@ namespace BIMinFormation.Revit.UI
             _link.Enabled = true;
         }
 
+        /// <param name="weightPreview">Weight calculated by the plugin for this element (or why not), offered for a mass property.</param>
         public LinkForm(string property, string detail, string entity, IReadOnlyList<LinkCandidate> candidates,
-            string? materialPreview, ParameterMapping? current)
+            string? materialPreview, ParameterMapping? current, string? weightPreview = null)
         {
             _candidates = candidates;
             UiKit.Setup(this, Tr.T("BIMinFormation — Vincular ao Revit"), new Size(820, 520));
@@ -83,6 +84,14 @@ namespace BIMinFormation.Revit.UI
                 _list.Items.Add(item);
             }
 
+            if (weightPreview != null)
+            {
+                _list.Items.Add(new ListViewItem(new[] { Tr.T("Peso calculado (volume de cada material × densidade)"), weightPreview, Tr.T("materiais"), "" })
+                {
+                    Tag = ParameterMapping.DerivedWeight,
+                });
+            }
+
             foreach (var candidate in candidates)
             {
                 _list.Items.Add(new ListViewItem(new[]
@@ -100,7 +109,8 @@ namespace BIMinFormation.Revit.UI
             // initial selection: the current link, otherwise the best suggestion (a very similar name)
             string? initial = current?.Parameter
                               ?? (materialPreview != null ? ParameterMapping.DerivedMaterial : null)
-                              ?? candidates.FirstOrDefault(c => c.Score >= 0.5)?.Name;
+                              ?? candidates.FirstOrDefault(c => c.Score >= 0.5)?.Name
+                              ?? (weightPreview != null ? ParameterMapping.DerivedWeight : null);
             _initial = _list.Items.Cast<ListViewItem>().Any(i => (string)i.Tag! == initial) ? initial : null;
             // the initial selection goes after the window shows: in the list HandleCreated the items have not reached Windows
             // yet (index -1, exception and an empty list)
@@ -118,7 +128,8 @@ namespace BIMinFormation.Revit.UI
             };
             var note = new Label
             {
-                Text = Tr.T("O exportador lê o parâmetro vinculado na hora de exportar: o valor fica sempre atual e o plugin não cria parâmetro novo."),
+                Text = Tr.T("O valor vem do vinculado: o exportador o lê na hora de exportar ou, quando precisa (quantidades, Revit 2027, ")
+                       + Tr.T("valores calculados), o plugin o copia a cada Aplicar e Exportar."),
                 Dock = DockStyle.Bottom,
                 Height = UiKit.Px(40),
                 Padding = UiKit.Px(8, 4, 8, 0),

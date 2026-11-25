@@ -33,7 +33,6 @@ namespace BIMinFormation.Revit.Services
                 _openSpec = spec;
                 _openRequested = true;
             };
-            _pane.RefreshRequested += () => Touch(immediately: true);
             application.Idling += OnIdling;
             application.ViewActivated += (s, e) =>
             {

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Autodesk.Revit.DB;
+using BIMinFormation.Ids;
 using BIMinFormation.Core.Fill;
 using BIMinFormation.Exporter;
 using BIMinFormation.Rules;
@@ -218,6 +219,62 @@ namespace BIMinFormation.Revit.Adapter
                 .Select(n => n!)
                 .Distinct()
                 .ToList();
+        }
+
+        /// <summary>
+        /// Weight calculated by the plugin, in kg: for each material of the element, its volume in the element times the
+        /// density of its physical asset (Materials → Physical). <c>null</c> with the reason when there is no material volume
+        /// or a material has no density (the weight would come out too low).
+        /// </summary>
+        public static double? Weight(Element element, out string? problem)
+        {
+            problem = null;
+            var document = element.Document;
+            var materials = element.GetMaterialIds(false).Where(id => id != ElementId.InvalidElementId).ToList();
+            if (materials.Count == 0)
+            {
+                problem = Tr.T("o elemento não tem material com volume");
+                return null;
+            }
+
+            double total = 0;
+            var withoutDensity = new List<string>();
+            foreach (var id in materials)
+            {
+                double volume = UnitUtils.ConvertFromInternalUnits(element.GetMaterialVolume(id), UnitTypeId.CubicMeters);
+                if (volume <= 0) continue;
+                var material = document.GetElement(id) as Material;
+                double? density = Density(material);
+                if (density == null || density <= 0)
+                {
+                    withoutDensity.Add(material?.Name ?? id.ToString());
+                    continue;
+                }
+
+                total += volume * density.Value;
+            }
+
+            if (withoutDensity.Count > 0)
+            {
+                problem = Tr.T("material sem densidade (Materiais → Físico): ") + string.Join(", ", withoutDensity.Distinct());
+                return null;
+            }
+
+            if (total <= 0)
+            {
+                problem = Tr.T("o elemento não tem material com volume");
+                return null;
+            }
+
+            return Math.Round(total, 3);
+        }
+
+        /// <summary>Density of the material's physical asset, in kg/m³; <c>null</c> without a physical asset.</summary>
+        public static double? Density(Material? material)
+        {
+            if (material == null || material.StructuralAssetId == ElementId.InvalidElementId) return null;
+            var asset = (material.Document.GetElement(material.StructuralAssetId) as PropertySetElement)?.GetStructuralAsset();
+            return asset == null ? null : UnitUtils.ConvertFromInternalUnits(asset.Density, UnitTypeId.KilogramsPerCubicMeter);
         }
     }
 }

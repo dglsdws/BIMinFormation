@@ -196,6 +196,13 @@ namespace BIMinFormation.Core.Prevalidation
             {
                 // given in the Qto parameter: the exporter writes that value (it reads the parameter before calculating)
                 if (failure == null) return new RequirementCheck(facet, CheckStatus.Pass, label, null);
+                if (ValueOrigins.NotCalculatedByExporter(facet, schema))
+                {
+                    return new RequirementCheck(facet, CheckStatus.Fail, label, Describe(failure) + "; "
+                        + (ValueOrigins.AcceptsQuantityValues(exporter)
+                            ? Tr.T("o exportador do Revit não calcula pesos: vincule (ex.: peso calculado) ou informe no Preencher")
+                            : ValueOrigins.NoQuantityValues(exporter)));
+                }
 
                 return new RequirementCheck(facet, CheckStatus.Unknown, label, Tr.T("calculado pelo exportador"), byExporter: true);
             }

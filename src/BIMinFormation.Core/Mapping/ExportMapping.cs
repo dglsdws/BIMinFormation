@@ -251,8 +251,11 @@ namespace BIMinFormation.Core.Mapping
                 Guid ownGuid = Fill.ParameterGuid.For(request.Set, request.Name, request.Type, request.Scope == ParameterScope.Type);
                 foreach (string entity in request.Entities)
                 {
-                    // link: the exporter reads the Revit parameter by name; without a link, the plugin parameter
-                    string? existing = profile.MappedParameter(request.Set, request.Name, entity);
+                    // link: the exporter reads the Revit parameter by name; without a link, the plugin parameter. In 2027 the set
+                    // is one group for every entity of every specification that uses it, so a parameter name there would be read
+                    // on all of them (a wall would get the roof's "Area"): the link is copied to the plugin parameter instead,
+                    // which exists only in the categories that received it (Fill In Parameters and Export write the copy)
+                    string? existing = format == MappingFormat.PerPropertySet ? null : profile.MappedParameter(request.Set, request.Name, entity);
                     string parameter = existing ?? own;
                     Guid? guid = existing == null ? ownGuid : (Guid?)null;
                     if (!byEntity.TryGetValue(entity, out var list))
@@ -291,18 +294,6 @@ namespace BIMinFormation.Core.Mapping
                                      + winner.Property.PropertyType + " (" + string.Join(", ", winner.Specs) + "); "
                                      + string.Join(", ", loser.Specs) + Tr.T(" pede ") + loser.Property.PropertyType + Tr.T(" e não vai passar."));
                     }
-                }
-            }
-
-            if (format == MappingFormat.PerPropertySet)
-            {
-                // in 2027 the set has one line per property: a single parameter for all entities
-                foreach (var split in byEntity.Values.SelectMany(l => l).GroupBy(p => (p.PropertySet, p.Name))
-                             .Where(g => g.Select(p => p.Parameter).Distinct().Count() > 1))
-                {
-                    warnings.Add(split.Key.PropertySet + "." + split.Key.Name + Tr.T(": no Revit 2027 o conjunto tem um parâmetro só por ")
-                                 + Tr.T("propriedade, e os vínculos por entidade apontam para ")
-                                 + string.Join(", ", split.Select(p => p.Parameter).Distinct()) + Tr.T("; vale um vínculo geral."));
                 }
             }
 

@@ -46,18 +46,65 @@ namespace BIMinFormation.Revit.Services
         /// <summary>The value must be greater than zero: positive measure in the IDS or in the standard Pset template.</summary>
         public bool Positive { get; set; }
 
+        /// <summary>
+        /// Quantity: the exporter calculates it when no value is given. Not the weights (it does not calculate them), nor a
+        /// quantity missing for this element in the last IFC check: those are values to fill in.
+        /// </summary>
+        public bool ExporterCalculates { get; set; } = true;
+
+        /// <summary>The exporter calculates the quantity by the static rule (only the last IFC check says otherwise).</summary>
+        public bool ExporterCalculatesByRule { get; set; } = true;
+
+        /// <summary>
+        /// This Revit takes a quantity value given in the <c>Qto_</c> parameter to the IFC (only 2027, see
+        /// <see cref="ValueOrigins.AcceptsQuantityValues"/>); before, quantities stay with the exporter.
+        /// </summary>
+        public bool QuantityValuesAccepted { get; set; } = true;
+
+        /// <summary>Quantity value the exporter wrote in the last IFC check (pre-validation), as text in SI units.</summary>
+        public string? ExporterValue { get; set; }
+
+        /// <summary>
+        /// The user chose to give a value to a quantity the exporter calculates (replaces the calculation). A quantity the
+        /// exporter calculates is locked by default.
+        /// </summary>
+        public bool Unlocked { get; set; }
+
+        /// <summary>Revit spec of the parameter that receives a number: shows the value in the project units too.</summary>
+        public ForgeTypeId? Spec { get; set; }
+
+        /// <summary>Why the plugin could not calculate the linked value (e.g. a material without density for the weight).</summary>
+        public string? LinkProblem { get; set; }
+
+        /// <summary>Linked to the weight the plugin calculates (volume × density).</summary>
+        public bool WeightLink => Link?.Parameter == BIMinFormation.Core.Profile.ParameterMapping.DerivedWeight;
+
+        /// <summary>Quantity the exporter calculates, still without a value and not unlocked: the grid does not edit it.</summary>
+        public bool LockedQuantity => Origin.Origin == ValueOrigin.ExporterQuantity && Conflict == null && Parameter != null && !IsWritable;
+
         /// <summary>Profile link for the property on this entity.</summary>
         public BIMinFormation.Core.Profile.ParameterMapping? Link { get; set; }
 
-        /// <summary>The value comes from a Revit parameter: the plugin does not write it, the exporter reads it.</summary>
-        public bool Linked => Link != null && !Link.IsDerived;
+        /// <summary>
+        /// Revit parameter whose value the plugin copies to its own parameter (Revit 2027: the exporter would read a linked
+        /// parameter on every entity of the set, see <see cref="ExportMapping"/>); <c>null</c> = not a copied link.
+        /// </summary>
+        public string? CopyFrom { get; set; }
 
-        /// <summary>The value is calculated by the plugin (the element material) and written to the plugin parameter.</summary>
-        public bool Derived => Link != null && Link.IsDerived;
+        /// <summary>The value comes from a Revit parameter: the plugin does not write it, the exporter reads it.</summary>
+        public bool Linked => Link != null && !Link.IsDerived && CopyFrom == null;
+
+        /// <summary>
+        /// The value is calculated by the plugin (the element material, or the copy of a linked parameter) and written to the
+        /// plugin parameter on every Apply and Export.
+        /// </summary>
+        public bool Derived => Link != null && (Link.IsDerived || CopyFrom != null);
 
         public bool IsWritable => Conflict == null && Parameter != null && !Linked
             && (Origin.Origin == ValueOrigin.CustomParameter || Origin.Origin == ValueOrigin.StandardParameter
-                || Origin.Origin == ValueOrigin.AttributeOverride || Origin.Origin == ValueOrigin.ExporterQuantity);
+                || Origin.Origin == ValueOrigin.AttributeOverride
+                || Origin.Origin == ValueOrigin.ExporterQuantity && QuantityValuesAccepted
+                && (!ExporterCalculates || Unlocked || Link != null || (ModelValue != null && !ModelValue.IsEmpty)));
 
         public CellResult Evaluate()
         {
@@ -67,7 +114,25 @@ namespace BIMinFormation.Revit.Services
                     ? FillCell.Evaluate(Requirement, Origin.Origin, ModelValue, null, DataType, Choices, Positive)
                 : !IsWritable && Origin.Origin != ValueOrigin.ExporterQuantity && Origin.Origin != ValueOrigin.NotExportable
                     ? new CellResult(CellStatus.Manual, Origin.Detail)
-                    : FillCell.Evaluate(Requirement, Origin.Origin, ModelValue, Typed, DataType, Choices, Positive);
+                    : FillCell.Evaluate(Requirement, Origin.Origin, ModelValue, Typed, DataType, Choices, Positive, ExporterCalculates);
+            if (result.Status == CellStatus.Automatic && Origin.Origin == ValueOrigin.ExporterQuantity && ExporterValue != null)
+            {
+                result = new CellResult(CellStatus.Automatic, Tr.T("calculado pelo exportador; na última conferência no IFC: ") + ExporterValue);
+            }
+            else if (result.Status == CellStatus.Pending && Origin.Origin == ValueOrigin.ExporterQuantity && !QuantityValuesAccepted)
+            {
+                result = new CellResult(CellStatus.NotExportable, Origin.Detail);
+            }
+            else if (result.Status == CellStatus.Pending && LinkProblem != null)
+            {
+                result = new CellResult(CellStatus.Pending, LinkProblem);
+            }
+            else if (result.Status == CellStatus.Pending && Origin.Origin == ValueOrigin.ExporterQuantity)
+            {
+                result = new CellResult(CellStatus.Pending, ExporterCalculatesByRule
+                    ? Tr.T("não saiu no IFC da última conferência: vincule ou informe")
+                    : Tr.T("o exportador do Revit não calcula pesos: vincule (ex.: peso calculado) ou informe"));
+            }
 
             // number in the IDS (e.g. IFCCOUNTMEASURE) written to an integer Revit parameter (Pset_DoorWindowGlazingType.GlassLayers):
             // only integers are written
@@ -121,6 +186,11 @@ namespace BIMinFormation.Revit.Services
                     : result.Status == CellStatus.Invalid ? Tr.T("inválido") : "vinculado";
             }
 
+            if (CopyFrom != null && (result.Status == CellStatus.Ok || result.Status == CellStatus.Pending))
+            {
+                return result.Status == CellStatus.Ok ? Tr.T("vinculado") : Tr.T("vínculo vazio"); // "automático" while the copy is due
+            }
+
             switch (result.Status)
             {
                 case CellStatus.Ok: return "ok";
@@ -172,7 +242,7 @@ namespace BIMinFormation.Revit.Services
         public bool IsBoolean => IfcDataTypes.Classify(DataType) == IfcValueKind.Boolean;
 
         /// <summary>Typed value, or the model value; a cell linked to Revit always shows the linked value.</summary>
-        public string ValueText => (Linked ? null : Typed) ?? (ModelValue == null || ModelValue.IsEmpty ? "" : ModelValue.ToString());
+        public string ValueText => (Linked ? null : Typed) ?? (ModelValue == null || ModelValue.IsEmpty ? ExporterValue ?? "" : ModelValue.ToString());
 
         public bool ToWrite()
         {
@@ -323,6 +393,11 @@ namespace BIMinFormation.Revit.Services
                         }
 
                         cell.Link = context.Profile.Link(requirement.PropertySet!, requirement.Name!, state.Entity);
+                        if (cell.Link != null && !cell.Link.IsDerived && mapped?.ParameterGuid != null)
+                        {
+                            cell.CopyFrom = cell.Link.Parameter; // the mapping kept the plugin parameter despite the link (2027)
+                        }
+
                         cell.Parameter = mapped?.Parameter
                                          ?? context.Profile.MappedParameter(requirement.PropertySet!, requirement.Name!, state.Entity)
                                          ?? context.Mapping.NameFor(requirement.PropertySet!, requirement.Name!, origin.DataType.PropertyType,
@@ -332,6 +407,19 @@ namespace BIMinFormation.Revit.Services
                     {
                         // a Qto with an installed parameter: empty, the exporter calculates; with a value, the exporter writes it
                         cell.Parameter = requirement.PropertySet + "." + requirement.Name + (cell.OnType ? "[Type]" : "");
+                        if (origin.Origin == ValueOrigin.ExporterQuantity)
+                        {
+                            cell.QuantityValuesAccepted = ValueOrigins.AcceptsQuantityValues(context.Exporter);
+                            cell.ExporterCalculatesByRule = !ValueOrigins.NotCalculatedByExporter(requirement.Facets[0], context.SchemaCatalog);
+                            cell.ExporterCalculates = cell.ExporterCalculatesByRule;
+                            string? probed = ProbeService.Quantity(element.Document, state.GlobalId, requirement.PropertySet!, requirement.Name!, out bool exported);
+                            if (probed != null) cell.ExporterValue = probed;
+                            else if (exported) cell.ExporterCalculates = false; // the element came out in the last check without it
+
+                            // a link (Revit parameter or calculated weight) is copied to the Qto parameter, which the exporter reads
+                            cell.Link = cell.QuantityValuesAccepted ? context.Profile.Link(requirement.PropertySet!, requirement.Name!, state.Entity) : null;
+                            if (cell.Link != null && !cell.Link.IsDerived) cell.CopyFrom = cell.Link.Parameter;
+                        }
                     }
                 }
                 else if (requirement.Name != null && ValueOrigins.AttributeOverrides.TryGetValue(requirement.Name, out var overrideName))
@@ -343,7 +431,33 @@ namespace BIMinFormation.Revit.Services
 
                 // material calculated by the plugin (derived link): the user picks all the materials of the element or one of
                 // them; the choice stays while it is a material of the element, otherwise "all" is proposed as "automatic"
-                if (cell.Derived && cell.IsWritable)
+                // copied link: the value of the Revit parameter, proposed as "automatic" while the copy differs
+                if (cell.CopyFrom != null && cell.IsWritable)
+                {
+                    string? value = LinkedValue(element, cell.Link!, cell.DataType);
+                    string? current = cell.ModelValue == null || cell.ModelValue.IsEmpty ? null : cell.ModelValue.ToString();
+                    if (value != null && value != current)
+                    {
+                        cell.Typed = value;
+                        cell.FromIds = true;
+                    }
+                }
+
+                // weight calculated by the plugin: volume of each material × its density
+                if (cell.WeightLink && cell.IsWritable)
+                {
+                    double? weight = RevitLinks.Weight(element, out string? problem);
+                    cell.LinkProblem = problem == null ? null : Tr.T("peso calculado: ") + problem;
+                    bool same = weight != null && cell.ModelValue != null && !cell.ModelValue.IsEmpty
+                                && Math.Abs(cell.ModelValue.Number - weight.Value) <= 1e-6 * Math.Max(1, weight.Value);
+                    if (weight != null && !same)
+                    {
+                        cell.Typed = weight.Value.ToString("R", CultureInfo.InvariantCulture);
+                        cell.FromIds = true;
+                    }
+                }
+
+                if (cell.Link?.Parameter == BIMinFormation.Core.Profile.ParameterMapping.DerivedMaterial && cell.IsWritable)
                 {
                     var names = RevitLinks.Materials(element, element.Document.GetElement(element.GetTypeId()) as ElementType);
                     if (names.Count > 0)
@@ -379,11 +493,44 @@ namespace BIMinFormation.Revit.Services
                     }
                 }
 
+                if (cell.Parameter != null && IfcDataTypes.Classify(cell.DataType) == IfcValueKind.Real) cell.Spec = TargetSpec(element, cell, context);
                 cells.Add(cell);
             }
 
             // writable first; the non-writable ones (gray) at the end
             return cells.OrderBy(c => c.IsWritable ? 0 : 1).ToList();
+        }
+
+        /// <summary>Spec of the parameter that receives the value: the one in the model, or the one the plugin would create.</summary>
+        private static ForgeTypeId? TargetSpec(Element element, FillCellModel cell, PluginContext context)
+        {
+            Element target = cell.OnType ? element.Document.GetElement(element.GetTypeId()) ?? element : element;
+            var parameter = ModelReader.Lookup(target, cell.Parameter!);
+            if (parameter != null && parameter.StorageType == StorageType.Double) return parameter.Definition.GetDataType();
+            string? spec = cell.Origin.DataType?.RevitSpec
+                           ?? (cell.DataType != null ? DataTypeMap.Resolve(cell.DataType, context.Exporter).RevitSpec : null);
+            return spec == null ? null : RevitSpecs.Resolve(spec);
+        }
+
+        /// <summary>
+        /// Value of the linked Revit parameter as the exporter would write it (text formatted as Revit shows it; numbers in IFC
+        /// units), looked up like the exporter: by name on the instance and then on the type, or by the built-in identity.
+        /// </summary>
+        internal static string? LinkedValue(Element element, BIMinFormation.Core.Profile.ParameterMapping link, string? dataType)
+        {
+            var type = element.Document.GetElement(element.GetTypeId()) as ElementType;
+            var parameter = RevitLinks.Find(element, type, link.Parameter) ?? ModelReader.Lookup(element, link.Parameter);
+            if (parameter == null && link.BuiltIn != null && Enum.TryParse(link.BuiltIn, out BuiltInParameter builtIn))
+            {
+                parameter = element.get_Parameter(builtIn) ?? type?.get_Parameter(builtIn);
+            }
+
+            if (parameter == null || !parameter.HasValue) return null;
+            bool text = dataType == null || IfcDataTypes.Classify(dataType) == IfcValueKind.String;
+            var value = text && parameter.StorageType != StorageType.String
+                ? (RevitLinks.ExportedText(parameter) is { } shown ? StateValue.Of(shown) : null)
+                : ModelReader.Value(parameter);
+            return value == null || value.IsEmpty ? null : value.ToString();
         }
 
         /// <summary>

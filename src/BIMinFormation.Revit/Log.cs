@@ -31,7 +31,10 @@ namespace BIMinFormation.Revit
                     string file = Path.Combine(Folder, DateTime.Now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + ".log");
                     string line = DateTime.Now.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture) + " " + level + " " +
                                   message + Environment.NewLine;
-                    File.AppendAllText(file, line, new UTF8Encoding(false));
+                    // shared with the other Revit versions open at the same time: append without locking the file out
+                    using var stream = new FileStream(file, FileMode.Append, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete);
+                    byte[] bytes = new UTF8Encoding(false).GetBytes(line);
+                    stream.Write(bytes, 0, bytes.Length);
                 }
             }
             catch

@@ -12,7 +12,8 @@ namespace BIMinFormation.Revit
     public sealed class App : IExternalApplication
     {
         public const string TabName = "BIMinFormation";
-        private static readonly string PanelText = Tr.N("Protocolo"); // panel title, translated on the ribbon
+        /// <summary>Internal name of the only panel; its title on the ribbon stays empty (a single group needs no name).</summary>
+        public const string PanelName = "BIMinFormation";
 
         public static string Version =>
             Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
@@ -33,7 +34,16 @@ namespace BIMinFormation.Revit
                 RevitLanguage = application.ControlledApplication.Language;
                 ApplyLanguage(PluginSettings.Load().Language);
                 application.CreateRibbonTab(TabName);
-                _panel = application.CreateRibbonPanel(TabName, Tr.T(PanelText));
+                _panel = application.CreateRibbonPanel(TabName, PanelName);
+                try
+                {
+                    _panel.Title = "";
+                }
+                catch (Exception ex)
+                {
+                    Log.Info("Ribbon: panel without title refused (" + ex.Message + "); keeps " + PanelName);
+                }
+
                 string assembly = Assembly.GetExecutingAssembly().Location;
 
                 // texts in Portuguese; the translation happens in Tr.T (and again when the language changes in Settings)
@@ -86,7 +96,6 @@ namespace BIMinFormation.Revit
         public static void ApplyLanguage(string choice)
         {
             Tr.Language = ResolveLanguage(choice);
-            if (_panel != null) _panel.Title = Tr.T(PanelText);
             foreach (var (button, text, toolTip) in Buttons)
             {
                 button.ItemText = Tr.T(text);

@@ -26,6 +26,7 @@ namespace BIMinFormation.Revit.UI
         private readonly Label _summary = new Label();
         private readonly Button _classifySelection;
         private readonly Button _apply;
+        private readonly Button _remove;
         private List<ClassificationRow> _rows = new List<ClassificationRow>();
         private int _sortColumn = -1;
         private bool _ascending = true;
@@ -50,10 +51,11 @@ namespace BIMinFormation.Revit.UI
             _grid.Columns[SpecColumn].DefaultCellStyle.ForeColor = Color.FromArgb(0, 84, 147);
 
             _classifySelection = UiKit.Button(Tr.T("Classificar seleção"), (s, e) => Pick(SelectedRows()), 160);
+            _remove = UiKit.Button(Tr.T("Remover classificação"), (s, e) => Remove(), 170);
             _apply = UiKit.Button(Tr.T("Aplicar"), (s, e) => Apply());
             var close = UiKit.Button(Tr.T("Fechar"), (s, e) => Close());
             Controls.Add(_grid);
-            Controls.Add(UiKit.Footer(_summary, _classifySelection, _apply, close));
+            Controls.Add(UiKit.Footer(_summary, _remove, _classifySelection, _apply, close));
 
             _grid.ColumnHeaderMouseClick += (s, e) => Sort(e.ColumnIndex);
             _grid.CellClick += OnCellClick;
@@ -182,6 +184,47 @@ namespace BIMinFormation.Revit.UI
             _classifySelection.Text = Tr.T("Classificar seleção (") + selected + ")";
             _classifySelection.Enabled = selected >= 2;
             _apply.Enabled = toApply > 0 && !Writing;
+            _remove.Enabled = !Writing && SelectedRows().Any(Removable);
+        }
+
+        /// <summary>Row with an applied specification (recognized in the model) that can be removed.</summary>
+        private static bool Removable(ClassificationRow row) => row.Recognition != null && row.Recognition.Specifications.Count > 0;
+
+        /// <summary>
+        /// Removes the applied Classification of the selected elements (identity, entity, predefined type), after confirmation.
+        /// Values filled in Fill In Parameters stay.
+        /// </summary>
+        private void Remove()
+        {
+            var rows = SelectedRows().Where(Removable).ToList();
+            if (rows.Count == 0) return;
+            var names = rows.SelectMany(r => r.Recognition!.Specifications.Select(s => s.Name)).Distinct().ToList();
+            string message = Tr.T("Remover a classificação de ") + rows.Count + Tr.T(" elemento(s)?") + "\n\n"
+                             + string.Join("\n", names.Take(8)) + (names.Count > 8 ? "\n…" : "") + "\n\n"
+                             + Tr.T("Apaga a identidade (ex.: EOI), a entidade e o tipo predefinido gravados pela Classificação; ")
+                             + Tr.T("os valores do Preencher Parâmetros ficam. Dá para desfazer no Revit (Ctrl+Z).");
+            if (MessageBox.Show(this, message, Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+
+            foreach (var row in rows) row.Chosen = null;
+            Writing = true;
+            _remove.Enabled = false;
+            Queue.Enqueue(Tr.T("remover a Classificação"), app =>
+            {
+                try
+                {
+                    var summary = ClassificationService.Remove(Document, Context, rows, ParametersFile);
+                    Log.Info("Classification removed: " + summary.ToString().Replace("\n", " "));
+                    Rebuild(app);
+                    TaskDialog.Show(Tr.T("BIMinFormation — Classificação"),
+                        Tr.T("Classificação removida: ") + summary.Applied + Tr.T("\nSem alterações: ") + summary.Unchanged
+                        + (summary.Failures.Count > 0 ? "\n\n" + string.Join("\n", summary.Failures.Take(20)) : ""));
+                }
+                finally
+                {
+                    Writing = false;
+                    UpdateSummary();
+                }
+            });
         }
 
         private void Sort(int column)

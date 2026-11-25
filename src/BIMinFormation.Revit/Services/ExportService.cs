@@ -18,11 +18,12 @@ namespace BIMinFormation.Revit.Services
     {
         /// <summary>
         /// PropertySets file of the Export button: a single plugin file, rewritten on every click with the current project (the
-        /// Revit window reads the file when exporting). Not the standalone file saved from Settings.
+        /// Revit window reads the file when exporting). Not the standalone file saved from Settings. One per Revit version: with
+        /// two versions open, the Export of one would rewrite the file the other is about to export with.
         /// </summary>
         public static string PropertySetsPath =>
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "BIMinFormation", "Exportacao",
-                "BIMinFormation_PropertySets.txt");
+                "BIMinFormation_PropertySets_" + (2000 + typeof(Document).Assembly.GetName().Version!.Major) + ".txt");
 
         /// <summary>
         /// Rewrites the values calculated by the plugin (derived link, e.g. the element material) that changed in the model,
@@ -30,7 +31,10 @@ namespace BIMinFormation.Revit.Services
         /// </summary>
         public static int RefreshDerived(Document document, PluginContext context)
         {
-            if (!context.Profile.Mappings.Any(m => m.IsDerived)) return 0;
+            // the material and, in 2027, the links (copied to the plugin parameter)
+            // and the quantity links (copied to the Qto parameter the exporter reads)
+            if (!context.Profile.Mappings.Any(m => m.IsDerived || context.Format == MappingFormat.PerPropertySet
+                                                   || m.PropertySet.StartsWith("Qto_", StringComparison.Ordinal))) return 0;
             var rows = FillService.BuildRows(document, context);
             foreach (var cell in rows.SelectMany(r => r.Cells).Where(c => !c.Derived))
             {
@@ -66,7 +70,7 @@ namespace BIMinFormation.Revit.Services
                 Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             }
 
-            var setup = ExportSetup.Build(specifications, context.Schema, context.Exporter, path);
+            var setup = ExportSetup.Build(specifications, context.Schema, context.Exporter, path, context.Profile.ExportOnlyRequested);
             setup.MappingWarnings.AddRange(file.Warnings);
             if (!setup.CanExport) return setup;
 

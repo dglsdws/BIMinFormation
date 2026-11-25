@@ -162,6 +162,10 @@ namespace BIMinFormation.Revit.UI
                 if (e.RowIndex >= 0) ShowInRevit();
             };
             _cells.CellValueChanged += OnValueChanged;
+            _cells.CellDoubleClick += (s, e) =>
+            {
+                if (e.RowIndex >= 0 && e.ColumnIndex == ValueColumn) Unlock(e.RowIndex);
+            };
             _cells.CurrentCellDirtyStateChanged += (s, e) =>
             {
                 if (_cells.CurrentCell is DataGridViewComboBoxCell && _cells.IsCurrentCellDirty)
@@ -192,10 +196,38 @@ namespace BIMinFormation.Revit.UI
         {
             if (_cells.CurrentCell == null || !(_cells.Rows[_cells.CurrentCell.RowIndex].Tag is List<FillCellModel> group)) return null;
             var cell = group[0];
-            return cell.Requirement.Kind == FacetKind.Property && cell.Origin.Origin == BIMinFormation.Exporter.ValueOrigin.CustomParameter
-                                                                  && cell.Conflict == null
+            return cell.Requirement.Kind == FacetKind.Property && cell.Conflict == null
+                                                                  && (cell.Origin.Origin == BIMinFormation.Exporter.ValueOrigin.CustomParameter
+                                                                      || cell.Origin.Origin == BIMinFormation.Exporter.ValueOrigin.ExporterQuantity && cell.Parameter != null
+                                                                      && cell.QuantityValuesAccepted)
                 ? cell
                 : null;
+        }
+
+        /// <summary>
+        /// A quantity the exporter calculates is locked; giving it a value replaces the calculation, so it asks first. Revit
+        /// does not let the value go back to empty afterwards (only Ctrl+Z).
+        /// </summary>
+        private void Unlock(int rowIndex)
+        {
+            if (!(_cells.Rows[rowIndex].Tag is List<FillCellModel> group) || !group.All(c => c.LockedQuantity)) return;
+            if (!group[0].QuantityValuesAccepted)
+            {
+                MessageBox.Show(this, group[0].Label + "\n\n" + Tr.T("Nesta versão do Revit o exportador não leva ao IFC uma quantidade informada ")
+                                      + Tr.T("(só o Revit 2027): ela fica com o cálculo do exportador."), Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            string message = group[0].Label + "\n\n"
+                             + Tr.T("O exportador calcula esta quantidade na exportação. Informar um valor substitui o cálculo em todo IFC ")
+                             + Tr.T("exportado depois, e o Revit não deixa o parâmetro voltar a vazio (só o Ctrl+Z desfaz). Informar mesmo assim?");
+            if (MessageBox.Show(this, message, Text, MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
+            foreach (var cell in group) cell.Unlocked = true;
+            FillCells(keepPosition: true);
+            if (rowIndex < _cells.Rows.Count)
+            {
+                _cells.CurrentCell = _cells.Rows[rowIndex].Cells[ValueColumn];
+                _cells.BeginEdit(true);
+            }
         }
 
         /// <summary>Link to Revit: picks the parameter and writes the link to the project profile.</summary>
@@ -216,10 +248,16 @@ namespace BIMinFormation.Revit.UI
                 string? material = text && LinkSuggestions.Words(requirement.Name ?? "").Contains("material")
                     ? Adapter.RevitLinks.MaterialNames(element, type) ?? Tr.T("(sem material)")
                     : null;
+                string? weight = null;
+                if (string.Equals(cell.DataType, "IFCMASSMEASURE", StringComparison.OrdinalIgnoreCase))
+                {
+                    double? kg = Adapter.RevitLinks.Weight(element, out string? problem);
+                    weight = kg != null ? kg.Value.ToString("0.###") + " kg" : "(" + problem + ")";
+                }
                 var current = Context.Profile.Link(requirement.PropertySet!, requirement.Name!, entity);
                 string detail = cell.TypeText + (requirement.DataType != null ? " (" + requirement.DataType + ")" : "") + " · " + cell.Specs
                                 + Tr.T(" · elemento: ") + element.Name;
-                using (var form = new LinkForm(requirement.PropertySet + " / " + requirement.Name, detail, entity, candidates, material, current))
+                using (var form = new LinkForm(requirement.PropertySet + " / " + requirement.Name, detail, entity, candidates, material, current, weight))
                 {
                     if (form.ShowDialog(this) != DialogResult.OK) return;
                     var profile = Core.Profile.ProjectProfile.FromJson(Context.Profile.ToJson());
@@ -356,7 +394,7 @@ namespace BIMinFormation.Revit.UI
             var keys = rows.Skip(1).Aggregate(new HashSet<string>(rows[0].Cells.Select(c => c.Key)),
                 (set, row) => { set.IntersectWith(row.Cells.Select(c => c.Key)); return set; });
             bool hide = Context.Profile.HideWhenNoValue;
-            return rows[0].Cells.Where(c => keys.Contains(c.Key) && (!hide || c.IsWritable || c.Linked))
+            return rows[0].Cells.Where(c => keys.Contains(c.Key) && (!hide || c.IsWritable || c.Linked || c.LockedQuantity))
                 .Select(c => rows.Select(r => r.Cells.First(x => x.Key == c.Key)).ToList())
                 .ToList();
         }
@@ -393,14 +431,23 @@ namespace BIMinFormation.Revit.UI
                         valueCell = combo;
                     }
 
-                    valueCell.ReadOnly = !first.IsWritable;
+                    valueCell.ReadOnly = !first.IsWritable || first.CopyFrom != null || first.WeightLink; // linked: the source value
                     var result = first.Evaluate();
                     gridRow.Cells[0].ToolTipText = Hint(first);
                     gridRow.Cells[4].ToolTipText = result.Message;
+                    var tips = new List<string>();
                     if (first.ModelValue != null && !first.ModelValue.IsEmpty && first.Typed != null)
                     {
-                        valueCell.ToolTipText = Tr.T("No modelo: ") + first.ModelValue;
+                        tips.Add(Tr.T("No modelo: ") + first.ModelValue);
                     }
+
+                    // the SI value as the project shows it (the user may work in mm, cm, degrees…)
+                    if (value.Length > 0 && Adapter.RevitSpecs.InProject(Document, first.Spec, value) is { } inProject)
+                    {
+                        tips.Add(Tr.T("Na unidade do projeto: ") + inProject);
+                    }
+
+                    if (tips.Count > 0) valueCell.ToolTipText = string.Join("\n", tips);
 
                     if (!first.IsWritable)
                     {
@@ -426,7 +473,18 @@ namespace BIMinFormation.Revit.UI
         {
             var lines = new List<string> { cell.TypeText + (cell.DataType != null ? " (" + cell.DataType + ")" : "") };
             if (cell.Requirement.AllowedValues != null) lines.Add(Tr.T("Valores: ") + string.Join(", ", cell.Requirement.AllowedValues));
+            if (cell.IsWritable && Core.Fill.UnitInput.Accepted(cell.DataType) is { } units)
+            {
+                lines.Add(Tr.T("Digite no SI (como o IDS) ou com a unidade: ") + units);
+            }
             if (cell.Linked) lines.Add(Tr.T("Vinculado ao parâmetro do Revit \"") + cell.Parameter + Tr.T("\": o exportador lê o valor na hora de exportar."));
+            else if (cell.CopyFrom != null) lines.Add(Tr.T("Vinculado ao parâmetro do Revit \"") + cell.CopyFrom
+                                                      + Tr.T("\": o plugin copia o valor para o próprio parâmetro a cada Aplicar e Exportar (no Revit 2027, ")
+                                                      + Tr.T("o exportador leria o parâmetro vinculado em todos os elementos do conjunto)."));
+            else if (cell.WeightLink) lines.Add(Tr.T("Peso calculado pelo plugin (volume de cada material × densidade dos recursos físicos dele) e regravado a cada Aplicar e Exportar."));
+            else if (cell.LockedQuantity) lines.Add(cell.QuantityValuesAccepted
+                ? Tr.T("Calculada pelo exportador na exportação. Duplo clique no valor para informar um (substitui o cálculo).")
+                : Tr.T("Calculada pelo exportador na exportação (valor informado só sai exportando do Revit 2027)."));
             else if (cell.Derived) lines.Add(Tr.T("Calculado pelo plugin (material do elemento) e regravado a cada Aplicar e Exportar."));
             if (cell.Parameter != null && !cell.Linked) lines.Add(Tr.T("Parâmetro: ") + cell.Parameter + (cell.OnType ? Tr.T(" (no tipo)") : ""));
             if (cell.Origin.Detail != null) lines.Add(cell.Origin.Detail);
@@ -480,9 +538,18 @@ namespace BIMinFormation.Revit.UI
         private void SetValue(int rowIndex, string text)
         {
             var group = (List<FillCellModel>)_cells.Rows[rowIndex].Tag!;
+            string? note = null;
             foreach (var cell in group)
             {
-                string value = IfcDataTypes.Classify(cell.DataType) == IfcValueKind.Real ? text.Trim().Replace(',', '.') : text;
+                string value = text;
+                if (IfcDataTypes.Classify(cell.DataType) == IfcValueKind.Real)
+                {
+                    // a value with its unit ("200 mm", "30°", "20 °C") goes to the SI unit the IDS uses
+                    string? si = Core.Fill.UnitInput.ToSi(text, cell.DataType, out string? problem);
+                    value = si ?? text.Trim().Replace(',', '.');
+                    note = si != null ? text.Trim() + " = " + si + Tr.T(" (SI, como o IDS pede)") : problem;
+                }
+
                 cell.Typed = cell.ModelValue != null && !cell.ModelValue.IsEmpty && cell.ModelValue.ToString() == value ? null : value;
                 cell.FromIds = false;
             }
@@ -492,6 +559,7 @@ namespace BIMinFormation.Revit.UI
                 FillCells(keepPosition: true);
                 RefreshElementCounts();
                 UpdateSummary();
+                if (note != null) _footer.Text = note;
             }));
         }
 

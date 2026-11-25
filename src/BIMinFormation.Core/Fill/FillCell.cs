@@ -63,8 +63,11 @@ namespace BIMinFormation.Core.Fill
         /// <param name="choices">Values the exporter writes (enumerated standard property, e.g. Status = NEW, EXISTING...):
         /// outside them the exporter drops the property.</param>
         /// <param name="positive">The value must be greater than zero (positive measure in the IDS or in the standard Pset).</param>
+        /// <param name="exporterCalculates">For a quantity: the exporter calculates it when it is not given (not the weights,
+        /// see <see cref="ValueOrigins.NotCalculatedByExporter"/>, nor one missing in the last IFC check).</param>
         public static CellResult Evaluate(PlannedRequirement requirement, ValueOrigin origin, StateValue? modelValue,
-            string? typedText, string? valueType = null, IReadOnlyList<string>? choices = null, bool positive = false)
+            string? typedText, string? valueType = null, IReadOnlyList<string>? choices = null, bool positive = false,
+            bool exporterCalculates = true)
         {
             string? dataType = requirement.DataType ?? valueType;
             switch (origin)
@@ -73,8 +76,8 @@ namespace BIMinFormation.Core.Fill
                     // the exporter reads the Qto parameter when it has a value (checked in Revit 2027: Qto_CoveringBaseQuantities.Width
                     // of a roof, which it does not calculate); empty = calculated by the exporter
                     bool given = typedText == null ? modelValue != null && !modelValue.IsEmpty : typedText.Length > 0 && typedText != Mixed;
-                    if (!given) return new CellResult(CellStatus.Automatic, Tr.T("calculado pelo exportador"));
-                    break;
+                    if (!given && exporterCalculates) return new CellResult(CellStatus.Automatic, Tr.T("calculado pelo exportador"));
+                    break; // given, or not calculated: a value to fill in like any other
                 case ValueOrigin.Modeling:
                     return new CellResult(CellStatus.Manual, Tr.T("conferir na modelagem"));
                 case ValueOrigin.NotExportable:
