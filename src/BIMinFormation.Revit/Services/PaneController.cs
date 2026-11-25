@@ -76,7 +76,18 @@ namespace BIMinFormation.Revit.Services
                 }
 
                 if (!_dirty || DateTime.Now - _changed < Quiet) return;
-                if (!DockablePane.PaneIsRegistered(Id) || !application.GetDockablePane(Id).IsShown()) return;
+                if (!DockablePane.PaneIsRegistered(Id)) return;
+                DockablePane pane;
+                try
+                {
+                    pane = application.GetDockablePane(Id);
+                }
+                catch (Autodesk.Revit.Exceptions.ArgumentException)
+                {
+                    return; // registered, but Revit creates the pane only after the main window: next Idling (logged as an error before)
+                }
+
+                if (!pane.IsShown()) return;
                 _dirty = false;
                 Refresh(application.ActiveUIDocument?.Document);
             }

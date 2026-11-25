@@ -64,9 +64,9 @@ namespace BIMinFormation.Revit.Services
         /// <summary>
         /// A user property the exporter writes with another type for the entity (two specifications ask for the same property
         /// with different types, e.g. BIMPR.Espessura as length in CONTRAPISO and as text in TELHA, both IfcCovering): the
-        /// requirement cannot pass in the IFC. The reason says so instead of "property missing".
+        /// requirement cannot pass in the IFC. The reason says so instead of "property missing" (also in the IFC check).
         /// </summary>
-        private static PrevalidationResult ExplainConflicts(PrevalidationResult result, PluginContext context)
+        internal static PrevalidationResult ExplainConflicts(PrevalidationResult result, PluginContext context)
         {
             string? Conflict(Rules.ElementState element, Facet facet)
             {

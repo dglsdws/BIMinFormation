@@ -67,7 +67,7 @@ namespace BIMinFormation.Revit.Services
             Format = MappingFormats.ForRevitYear(exporter.Year); // the format of the Revit exporter in use
             // only the specifications in use in the model (or all, by the option or before the first computation)
             Mapping = ExportMapping.Build(profile.MappedSpecifications(library.Specifications), schema, exporter, profile, Format);
-            Reader = new ModelReader((s, p) => DataTypes.TryGetValue(s + "/" + p, out var t) ? t : null, Mapping);
+            Reader = new ModelReader((s, p) => DataTypes.TryGetValue(s + "/" + p, out var t) ? t : null, Mapping, SchemaCatalog);
         }
 
         /// <summary>Document profile; without a profile in the .rvt, a new profile with the folder from the preferences.</summary>

@@ -416,7 +416,9 @@ Salvar o arquivo de PropertySets	Save the PropertySets file
 \nSem alterações: 	\nUnchanged: 
  (escolha o tipo predefinido)	 (choose the predefined type)
  (já)	 (already)
+ como 	 as 
  fichas aplicáveis	 applicable specifications
+ num elemento sem tipo (forma genérica); use uma família com tipo.	 on an element without a type (generic shape); use a family with a type.
  · nível 	 · level 
 (alternativa: escolha à mão)	(alternative: choose by hand)
 (ficha sem entity)	(specification without entity)
@@ -427,7 +429,12 @@ Salvar o arquivo de PropertySets	Save the PropertySets file
 : elemento não existe mais	: element no longer exists
 Aplicados: 	Applied: 
 BIMinFormation: Classificação	BIMinFormation: Classification
+Edifício (Informações do projeto)	Building (Project Information)
+as Informações do projeto são o edifício (IfcBuilding); escolha uma ficha de edifício.	Project Information is the building (IfcBuilding); choose a building specification.
 escolha o tipo predefinido da ficha	choose the specification's predefined type
+o exportador do Revit escreve 	the Revit exporter writes 
+o exportador do Revit não escreve o tipo predefinido de 	the Revit exporter does not write the predefined type of 
+o exportador do Revit não exporta IfcRamp de um elemento que não é rampa do Revit (o elemento fica fora do IFC).	the Revit exporter does not export IfcRamp for an element that is not a Revit ramp (the element is left out of the IFC).
 
 # src/BIMinFormation.Revit/Services/ExportService.cs
 \nFichas: 	\nSpecifications: 
@@ -442,7 +449,6 @@ yyyy-MM-dd HH:mm	yyyy-MM-dd HH:mm
 \nInválidos: 	\nInvalid: 
 \nJá corretos: 	\nAlready correct: 
 \nPendentes: 	\nPending: 
- como 	 as 
  fichas	 specifications
  para 	 for 
 ), e esta ficha pede 	), and this specification requires 

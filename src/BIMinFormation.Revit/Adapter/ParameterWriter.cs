@@ -216,7 +216,11 @@ namespace BIMinFormation.Revit.Adapter
         /// <c>IFC_EXPORT_PREDEFINEDTYPE</c>), <c>IfcObjectType</c> in the fallback and the identity properties. The identity
         /// parameters must exist (see <see cref="Ensure"/>).
         /// </summary>
-        public int Apply(Element element, ClassificationAction action, Func<IdentityWrite, ParameterRequest>? identity = null)
+        /// <param name="writeEntity">
+        /// <c>false</c> for Project Information (the building): its entity is fixed, only identity and properties are written.
+        /// </param>
+        public int Apply(Element element, ClassificationAction action, Func<IdentityWrite, ParameterRequest>? identity = null,
+            bool writeEntity = true)
         {
             if (!action.CanApply || action.NeedsPredefinedChoice)
             {
@@ -225,17 +229,17 @@ namespace BIMinFormation.Revit.Adapter
             }
 
             int changes = 0;
-            if (action.ExportAs != null)
+            if (action.ExportAs != null && writeEntity)
             {
                 changes += SetBuiltIn(element, BuiltInParameter.IFC_EXPORT_ELEMENT_AS, action.ExportAs);
             }
 
-            if (action.PredefinedType != null)
+            if (action.PredefinedType != null && writeEntity)
             {
                 changes += SetBuiltIn(element, BuiltInParameter.IFC_EXPORT_PREDEFINEDTYPE, action.PredefinedType);
             }
 
-            if (action.ObjectType != null)
+            if (action.ObjectType != null && writeEntity)
             {
                 changes += Set(element, "IfcObjectType", action.ObjectType);
             }

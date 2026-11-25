@@ -18,11 +18,8 @@ namespace BIMinFormation.Revit.Adapter
         /// <summary><c>IFC_EXPORT_ELEMENT_TYPE_AS</c> on the type.</summary>
         Type,
 
-        /// <summary>Default mapping of the category (approximation of the exporter).</summary>
+        /// <summary>Default mapping of the category (approximation of the exporter); unmapped categories: proxy.</summary>
         Inferred,
-
-        /// <summary>No known entity.</summary>
-        Empty,
     }
 
     /// <summary>
@@ -47,6 +44,7 @@ namespace BIMinFormation.Revit.Adapter
             [BuiltInCategory.OST_StructuralFoundation] = "IfcFooting",
             [BuiltInCategory.OST_Stairs] = "IfcStair",
             [BuiltInCategory.OST_Railings] = "IfcRailing",
+            [BuiltInCategory.OST_StairsRailing] = "IfcRailing", // the railing elements (Railing); checked in 2027: one IfcRailing each
             [BuiltInCategory.OST_Ramps] = "IfcRamp",
             [BuiltInCategory.OST_CurtainWallPanels] = "IfcPlate",
             [BuiltInCategory.OST_CurtainWallMullions] = "IfcMember",
@@ -84,6 +82,7 @@ namespace BIMinFormation.Revit.Adapter
 
         private readonly Func<string, string, string?> _dataTypeOf;
         private readonly ExportMapping? _mapping;
+        private readonly IfcSchemaCatalog? _schema;
 
         /// <param name="dataTypeOf">
         /// IFC type the exporter will write <c>(set, property)</c> with (from the PropertySets file or the standard Pset);
@@ -93,11 +92,54 @@ namespace BIMinFormation.Revit.Adapter
         /// Mapping of the user sets per entity: the value of each property comes from the parameter the exporter will read for
         /// the element's entity (the same property may have parameters of different types).
         /// </param>
-        public ModelReader(Func<string, string, string?>? dataTypeOf = null, ExportMapping? mapping = null)
+        /// <param name="schema">Schema of the export: entity hierarchy for what the exporter drops (see <see cref="DropsPredefinedType"/>).</param>
+        public ModelReader(Func<string, string, string?>? dataTypeOf = null, ExportMapping? mapping = null, IfcSchemaCatalog? schema = null)
         {
             _dataTypeOf = dataTypeOf ?? ((s, p) => null);
             _mapping = mapping;
+            _schema = schema;
         }
+
+        /// <summary>
+        /// The exporter does not write the predefined type: measured in Revit 2027 (IFC 4.3), an element without a type (a
+        /// generic shape) exported as an installation element (<c>IfcDistributionElement</c> and subtypes) or a surface
+        /// feature comes out with PredefinedType empty, while building elements keep it.
+        /// </summary>
+        public static bool DropsPredefinedType(ElementType? type, string? entity, IfcSchemaCatalog schema) =>
+            type == null && entity != null
+            && (schema.IsSubtypeOf(entity, "IfcDistributionElement") || schema.IsSubtypeOf(entity, "IfcFeatureElement"));
+
+        /// <summary>
+        /// Entity the exporter writes for the one asked (measured in Revit 2027): what is not a physical element (not an
+        /// <c>IfcProduct</c>, e.g. <c>IfcConstructionEquipmentResource</c>) goes out as proxy; in IFC 4.3 <c>IfcFlowTerminal</c>
+        /// and <c>IfcEnergyConversionDevice</c> go out as <c>IfcDistributionElement</c>.
+        /// </summary>
+        public static string ExportedEntity(string entity, IfcSchemaCatalog schema)
+        {
+            // a type entity (IfcBoilerType) goes out as the occurrence (IfcBoiler), as Entity reads IfcExportAs
+            if (entity.EndsWith("Type", StringComparison.OrdinalIgnoreCase) && schema.Entity(entity.Substring(0, entity.Length - 4)) != null)
+            {
+                entity = entity.Substring(0, entity.Length - 4);
+            }
+
+            if (schema.Entity(entity) != null && !schema.IsSubtypeOf(entity, "IfcProduct")) return "IfcBuildingElementProxy";
+            if (schema.Version == IfcSchemaVersion.Ifc4X3Add2
+                && (string.Equals(entity, "IfcFlowTerminal", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(entity, "IfcEnergyConversionDevice", StringComparison.OrdinalIgnoreCase)))
+            {
+                return "IfcDistributionElement";
+            }
+
+            return entity;
+        }
+
+        /// <summary>
+        /// Entity the exporter cannot give to the element: <c>IfcRamp</c> on what is not a Revit ramp makes the export fail for
+        /// the element ("unexpected error", checked in 2027) and it is left out of the IFC.
+        /// </summary>
+        public static bool FailsExport(Element element, string? entity) =>
+            string.Equals(entity, "IfcRamp", StringComparison.OrdinalIgnoreCase)
+            && element.Category?.Id.IdValue() != (long)BuiltInCategory.OST_Ramps;
 
         /// <summary>Model elements that go into the grid (no types, views, levels, grids or reference planes).</summary>
         private static readonly HashSet<long> ExcludedCategories = new HashSet<long>
@@ -118,6 +160,28 @@ namespace BIMinFormation.Revit.Adapter
             (int)BuiltInCategory.OST_Sun,
             (int)BuiltInCategory.OST_HVAC_Zones,
             (int)BuiltInCategory.OST_LegendComponents,
+
+            // created by Revit along with other elements and not exported on their own (checked in 2027): the center line of
+            // pipes, ducts, conduits and cable trays, and the parts of a railing (it comes out as one IfcRailing). Read as
+            // elements, they took the specification of their host and Fill In Parameters failed on read-only parameters
+            (int)BuiltInCategory.OST_CenterLines,
+            (int)BuiltInCategory.OST_PipeCurvesCenterLine,
+            (int)BuiltInCategory.OST_PipeFittingCenterLine,
+            (int)BuiltInCategory.OST_FlexPipeCurvesCenterLine,
+            (int)BuiltInCategory.OST_DuctCurvesCenterLine,
+            (int)BuiltInCategory.OST_DuctFittingCenterLine,
+            (int)BuiltInCategory.OST_FlexDuctCurvesCenterLine,
+            (int)BuiltInCategory.OST_ConduitCenterLine,
+            (int)BuiltInCategory.OST_ConduitFittingCenterLine,
+            (int)BuiltInCategory.OST_CableTrayCenterLine,
+            (int)BuiltInCategory.OST_CableTrayFittingCenterLine,
+            (int)BuiltInCategory.OST_RailingTopRail,
+            (int)BuiltInCategory.OST_RailingHandRail,
+            (int)BuiltInCategory.OST_StairsRailingBaluster,
+            (int)BuiltInCategory.OST_RailingSupport,
+            (int)BuiltInCategory.OST_RailingTermination,
+            (int)BuiltInCategory.OST_RailingRailPathExtensionLines,
+            (int)BuiltInCategory.OST_RailingRailPathLines,
         };
 
         public static IList<Element> ModelElements(Document document) =>
@@ -289,8 +353,21 @@ namespace BIMinFormation.Revit.Adapter
             watch = Watch(Tr.T("entidade e atributos"));
             watch.Start();
             string? entity = entityOverride ?? Entity(element, type).Entity;
+            bool swapped = false;
+            if (entityOverride == null && entity != null && _schema != null)
+            {
+                string exported = ExportedEntity(entity, _schema);
+                swapped = !string.Equals(exported, entity, StringComparison.OrdinalIgnoreCase);
+                entity = exported; // read as the IFC will have it
+            }
+
             string? predefined = Text(element, BuiltInParameter.IFC_EXPORT_PREDEFINEDTYPE)
                                  ?? (type == null ? null : Text(type, BuiltInParameter.IFC_EXPORT_PREDEFINEDTYPE_TYPE));
+            if (_schema != null && DropsPredefinedType(type, entity, _schema)
+                || swapped && string.Equals(entity, "IfcDistributionElement", StringComparison.OrdinalIgnoreCase))
+            {
+                predefined = null; // read as the IFC will have it
+            }
             string? objectType = Text(own, "IfcObjectType") ?? Text(typeIndex, "IfcObjectType[Type]");
             bool userDefined = predefined == "USERDEFINED";
             if (userDefined)
@@ -375,9 +452,11 @@ namespace BIMinFormation.Revit.Adapter
                 return ("IfcBuildingElementProxy", EntityOrigin.Inferred);
             }
 
+            // a category without an entity in the table goes out as proxy (exporter default), and so it is read and offered
+            // in the Classification (planting, specialty equipment...)
             return element.Category != null && CategoryEntities.TryGetValue((BuiltInCategory)element.Category.Id.IdValue(), out string? mapped)
                 ? (mapped, EntityOrigin.Inferred)
-                : (null, EntityOrigin.Empty);
+                : ("IfcBuildingElementProxy", EntityOrigin.Inferred);
         }
 
         private static string StripPredefined(string value)

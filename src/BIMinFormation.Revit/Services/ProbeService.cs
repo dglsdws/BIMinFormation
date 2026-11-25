@@ -76,7 +76,8 @@ namespace BIMinFormation.Revit.Services
             var model = PrevalidationService.Run(document, context);
             var ifc = IfcModelReader.Read(path, includeEntity: ApplicableEntities(context.Library.Specifications));
             Log.Info("Check in the IFC: " + path + " (" + ifc.Schema + ", " + ifc.Elements.Count + " elements read)");
-            return IfcProbe.Merge(model, ifc, path, DateTime.Now);
+            // the IFC only shows the property missing: the reason says it is the type conflict between specifications
+            return PrevalidationService.ExplainConflicts(IfcProbe.Merge(model, ifc, path, DateTime.Now), context);
         }
 
         /// <summary>

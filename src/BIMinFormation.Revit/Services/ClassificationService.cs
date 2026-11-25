@@ -134,11 +134,6 @@ namespace BIMinFormation.Revit.Services
             {
                 var type = document.GetElement(element.GetTypeId()) as ElementType;
                 var (entity, origin) = ModelReader.Entity(element, type);
-                if (origin == EntityOrigin.Empty)
-                {
-                    continue; // no IFC entity, mapped, inferred or explicit
-                }
-
                 var state = model.Find(element.Id.IdValue().ToString());
                 rows.Add(new ClassificationRow
                 {
@@ -152,6 +147,24 @@ namespace BIMinFormation.Revit.Services
                     CurrentPredefined = ModelReader.Text(element, BuiltInParameter.IFC_EXPORT_PREDEFINEDTYPE)
                                         ?? (type == null ? null : ModelReader.Text(type, BuiltInParameter.IFC_EXPORT_PREDEFINEDTYPE_TYPE)),
                     Origin = origin,
+                    Recognition = state == null ? null : recognizer.Recognize(state, model),
+                });
+            }
+
+            // the building: Project Information, which the exporter writes as IfcBuilding. Offered so that a specification
+            // applied by a property (an identity such as an EOI) can be written there; the entity is fixed
+            var info = document.ProjectInformation;
+            if (info != null)
+            {
+                var state = model.Find(info.Id.IdValue().ToString());
+                rows.Add(new ClassificationRow
+                {
+                    Id = info.Id,
+                    Order = order++,
+                    Name = Tr.T("Edifício (Informações do projeto)"),
+                    Category = info.Category?.Name ?? "",
+                    CurrentEntity = "IfcBuilding",
+                    Origin = EntityOrigin.Inferred,
                     Recognition = state == null ? null : recognizer.Recognize(state, model),
                 });
             }
@@ -226,10 +239,36 @@ namespace BIMinFormation.Revit.Services
                     continue;
                 }
 
+                bool building = element is ProjectInfo;
+                if (building && action.Entity != null && !string.Equals(action.Entity, "IfcBuilding", StringComparison.OrdinalIgnoreCase))
+                {
+                    summary.Failures.Add(row.ElementText + ": " + Tr.T("as Informações do projeto são o edifício (IfcBuilding); escolha uma ficha de edifício."));
+                    continue;
+                }
+
                 try
                 {
-                    int changes = writer.Apply(element, action, Identity);
+                    int changes = writer.Apply(element, action, Identity, writeEntity: !building);
                     if (changes > 0) summary.Applied++; else summary.Unchanged++;
+
+                    // what the exporter will not do with this element, said now instead of only in the IFC check
+                    var type = document.GetElement(element.GetTypeId()) as ElementType;
+                    if (action.PredefinedType != null && action.Entity != null && ModelReader.DropsPredefinedType(type, action.Entity, context.SchemaCatalog))
+                    {
+                        summary.Notes.Add(row.ElementText + ": " + Tr.T("o exportador do Revit não escreve o tipo predefinido de ") + action.Entity
+                                          + Tr.T(" num elemento sem tipo (forma genérica); use uma família com tipo."));
+                    }
+
+                    string? exported = action.Entity == null ? null : ModelReader.ExportedEntity(action.Entity, context.SchemaCatalog);
+                    if (exported != null && !string.Equals(exported, action.Entity, StringComparison.OrdinalIgnoreCase))
+                    {
+                        summary.Notes.Add(row.ElementText + ": " + Tr.T("o exportador do Revit escreve ") + action.Entity + Tr.T(" como ") + exported + ".");
+                    }
+
+                    if (ModelReader.FailsExport(element, action.Entity))
+                    {
+                        summary.Notes.Add(row.ElementText + ": " + Tr.T("o exportador do Revit não exporta IfcRamp de um elemento que não é rampa do Revit (o elemento fica fora do IFC)."));
+                    }
                 }
                 catch (Exception ex)
                 {
